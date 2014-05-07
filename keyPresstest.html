@@ -12,45 +12,10 @@
 		
 			//----------------------------------------------------------
 			// GLOBAL VARIABLES
-			var planeWidth = 450;
-			var planeHeight = 450;
+			var planeWidth = 400;
+			var planeHeight = 400;
 			var zombies = [];
-			
-			//----------------------------------------------------------
-			//FUNCTIONS
-			
-			// KEYCODES w=119 a=97, s=115, d=100, 
-			function detectKeypress(e){	
-				//alert(e.keyCode);
-				if(e.keyCode == 119){
-					camera.position.y -=20;		
-				}
-				//LEFT
-				else if(e.keyCode == 97){
-					camera.position.x -= 20;	
-				}
-				//RIGHT
-				else if(e.keyCode == 100){
-					camera.position.x += 20;
-				}
-				//DOWN
-				else if(e.keyCode == 115){
-					camera.position.y +=20;	
-				}
-			};
-			
-		
-			// this function is executed on each animation frame
-			function render(){	 
-				// render
-				renderer.render(scene, camera);				
-				controls.update();
-				
-				// request new frame
-				requestAnimationFrame(function(){
-				    render();
-				});
-			}
+			var timer = 0;
 			
 			//----------------------------------------------------------
 			// INITIALIZE
@@ -62,7 +27,7 @@
 			
 			// camera
 			var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
-			camera.position.y = -600;
+			camera.position.y = -500;
 			camera.position.z = 500;
 			camera.rotation.x = 45 * (Math.PI / 180);
 			
@@ -84,15 +49,66 @@
 				scene.add(zombie);
 			}
 			
-			console.log(zombies);
-
-
-			  // Add OrbitControls so that we can pan around with the mouse.
-			 controls = new THREE.OrbitControls(camera, renderer.domElement);
-			// start animation
+			
+			// Add OrbitControls so that we can pan around with the mouse.
+			controls = new THREE.OrbitControls(camera, renderer.domElement);
+			
+			// START THE ANIMATION
 			render();
 			
+			//----------------------------------------------------------
+			//FUNCTIONS
+			
+			//  Camera Movement // KEYCODES w=119 a=97, s=115, d=100, 
+			function detectKeypress(e){	
+				//alert(e.keyCode);
+				if(e.keyCode == 119){
+					camera.position.y -=20;		
+				}
+				//LEFT
+				else if(e.keyCode == 97){
+					camera.position.x -= 20;	
+				}
+				//RIGHT
+				else if(e.keyCode == 100){
+					camera.position.x += 20;
+				}
+				//DOWN
+				else if(e.keyCode == 115){
+					camera.position.y +=20;	
+				}
+			};
+			
+		
+			// What happens each render
+			function render(){	 
+				// render
+				renderer.render(scene, camera);				
+				controls.update();
+				
+				updateZombies();
+				
+				//timer += 1;
+				
+				// request new frame
+				requestAnimationFrame(function(){
+				    render();
+				});
+			}
+			
+			function updateZombies(){
+				
+				for(i = 0; i < zombies.length; i++){
+					if(Math.random() <= 0.2 && 
+						Math.abs(zombies[i].position.x) <= planeWidth/2 && 
+						Math.abs(zombies[i].position.x) <= planeWidth/2 ){
+							
+							zombies[i].position.x += Math.floor(Math.random() * 3) - 1;
+							zombies[i].position.y += Math.floor(Math.random() * 3) - 1;
+					}
+				}
+			}
+			
 		</script>
-
 	</body>
 </html>
