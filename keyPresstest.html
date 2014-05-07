@@ -45,6 +45,8 @@
 				var zombie = new THREE.Mesh( new THREE.CylinderGeometry( 5, 5, 20, 32 ), new THREE.MeshBasicMaterial( {color: 0xffff00}) );		
 				zombie.position.x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
 				zombie.position.y = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
+				zombie.rotation.z = Math.floor(Math.random() * 360) * (Math.PI / 180);
+				console.log("Rotation: " + zombie.rotation.z);
 				zombies[i] = zombie;
 				scene.add(zombie);
 			}
@@ -87,26 +89,29 @@
 				controls.update();
 				
 				updateZombies();
-				
-				//timer += 1;
-				
+								
 				// request new frame
 				requestAnimationFrame(function(){
 				    render();
 				});
 			}
 			
+			
 			function updateZombies(){
 				
 				for(i = 0; i < zombies.length; i++){
 					if(Math.random() <= 0.2 && 
 						Math.abs(zombies[i].position.x) <= planeWidth/2 && 
-						Math.abs(zombies[i].position.x) <= planeWidth/2 ){
+						Math.abs(zombies[i].position.y) <= planeHeight/2 ){
 							
-							zombies[i].position.x += Math.floor(Math.random() * 3) - 1;
-							zombies[i].position.y += Math.floor(Math.random() * 3) - 1;
+							zombies[i].position.x += Math.cos(zombies[i].rotation.z);
+							zombies[i].position.y += Math.sin(zombies[i].rotation.z);
+											
 					}
+					
+					zombies[i].rotation.z += (Math.floor(Math.random()* 5)-3)*Math.PI/180;
 				}
+				
 			}
 			
 		</script>
