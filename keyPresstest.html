@@ -15,7 +15,7 @@
 			var planeWidth = 400;
 			var planeHeight = 400;
 			var zombies = [];
-			var timer = 0;
+			var people = [];
 			
 			//----------------------------------------------------------
 			// INITIALIZE
@@ -40,9 +40,9 @@
 			scene.add(plane);
 			
 			
-			//Spawn zombies at random places
+			//Spawn ZOMBIES
 			for( i = 0; i < 10; i++ ){
-				var zombie = new THREE.Mesh( new THREE.CylinderGeometry( 5, 5, 20, 32 ), new THREE.MeshBasicMaterial( {color: 0xffff00}) );		
+				var zombie = new THREE.Mesh( new THREE.CylinderGeometry( 5, 5, 20, 32 ), new THREE.MeshBasicMaterial( {color: 0xff0000}) );		
 				zombie.position.x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
 				zombie.position.y = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
 				zombie.rotation.z = Math.floor(Math.random() * 360) * (Math.PI / 180);
@@ -51,6 +51,15 @@
 				scene.add(zombie);
 			}
 			
+			//Spawn PEOPLE
+			for( i = 0; i < 3; i++ ){
+				var person = new THREE.Mesh( new THREE.CylinderGeometry( 5, 5, 20, 32 ), new THREE.MeshBasicMaterial( {color: 0xffff00}) );		
+				person.position.x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
+				person.position.y = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
+				people[i] = person;
+				scene.add(person);
+			}
+
 			
 			// Add OrbitControls so that we can pan around with the mouse.
 			controls = new THREE.OrbitControls(camera, renderer.domElement);
