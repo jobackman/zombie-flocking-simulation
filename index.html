@@ -1,35 +1,188 @@
+<!DOCTYPE html>
 <html>
 	<head>
-		<title>My first Three.js app</title>
-		<style>canvas { width: 100%; height: 100% }</style>
+		<style> body {margin: 0px;}</style>
 	</head>
-	<body>
-		<script src="js/three.min.js"></script>
-		<script>
-			var scene = new THREE.Scene();
-			var camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
 
+	<body> 
+		<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+		<script src="js/three.min.js"></script>
+		<script src="js/OrbitControls.js"></script>
+		<script>
+		
+			//----------------------------------------------------------
+			// GLOBAL VARIABLES
+			var planeWidth = 400;
+			var planeHeight = 400;
+			var zombies = 10;
+			var speed = 2;
+			var flock = [];
+			var people = [];
+			
+			var align;
+			var alignx;
+			var aligny;
+			var cohesion;
+			var cohesionx;
+			var cohesiony;
+			
+			var fov = Math.PI * 0.25;
+			
+			//----------------------------------------------------------
+			// INITIALIZE
+			
+			// renderer
 			var renderer = new THREE.WebGLRenderer();
 			renderer.setSize(window.innerWidth, window.innerHeight);
 			document.body.appendChild(renderer.domElement);
+			
+			// camera
+			var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000);
+			camera.position.y = -500;
+			camera.position.z = 500;
+			camera.rotation.x = 45 * (Math.PI / 180);
+			
+			// scene
+			var scene = new THREE.Scene();
 
-			var geometry = new THREE.CubeGeometry(1,1,1);
-			var material = new THREE.MeshBasicMaterial({color: 0x00ff00});
-			var cube = new THREE.Mesh(geometry, material);
-			scene.add(cube);
+			// GRID
+			var numW = 10; // how many wide
+			var numH = 10; // how many tall
+			var plane = new THREE.Mesh( new THREE.PlaneGeometry( planeWidth, planeHeight, numW, numH ), new   THREE.MeshBasicMaterial( { color: 0x303030, wireframe: true } ) );
+			scene.add(plane);		
+			
+			//Spawn ZOMBIES
+			for( i = 0; i < zombies; i++ ){
+			
+				var zombie = new THREE.Mesh( new THREE.CylinderGeometry( 5, 5, 10, 32 ), new THREE.MeshBasicMaterial( {color: 0xff0000}) );		
+				zombie.position.x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
+				zombie.position.y = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
+				zombie.dx = Math.random() - 0.5;
+				zombie.dy = Math.random() - 0.5;
+				zombie.rotation.z = Math.atan2(zombie.dx, zombie.dy);
+	
+				flock.push(zombie);				
+				scene.add(zombie);
+			}
+			
+			//Spawn PEOPLE
+			for( i = 0; i < 3; i++ ){
+				var person = new THREE.Mesh( new THREE.CylinderGeometry( 2, 2, 10, 32 ), new THREE.MeshBasicMaterial( {color: 0xffff00}) );		
+				person.position.x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
+				person.position.y = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
+				people[i] = person;
+				scene.add(person);
+			}
 
-			camera.position.z = 5;
-
-			var render = function () {
-				requestAnimationFrame(render);
-
-				cube.rotation.x += 0.1;
-				cube.rotation.y += 0.1;
-
-				renderer.render(scene, camera);
-			};
-
+			
+			// Add OrbitControls so that we can pan around with the mouse.
+			controls = new THREE.OrbitControls(camera, renderer.domElement);
+			
+			// START THE ANIMATION
 			render();
+			
+			
+			//----------------------------------------------------------
+			//FUNCTIONS
+		
+			// What happens each render
+			function render(){	 	
+							
+				// render
+				renderer.render(scene, camera);				
+				controls.update();
+				
+				updateFlock();
+								
+				// request new frame
+				requestAnimationFrame(function(){
+				    render();
+				});
+			}
+			
+			
+			function updateFlock(){
+				
+				for(i = 0; i < flock.length; i++){
+					zombie = flock[i];
+					
+					align = false;
+					alignx = 0;
+					aligny = 0;
+					ac = 0;
+					cohesion = false;
+					cohesionx = 0;
+					cohesiony = 0;
+					cc = 0;
+					
+					for (j = 0; j < flock.length; j++){	
+						if(i == j) continue;
+						
+						var otherZombie = flock[j];
+						
+						// ---------------------------------------------
+						//TODO: Jämför distance med alla andra zombies
+						
+						var diffX = zombie.position.x - otherZombie.position.x;
+						var diffY = zombie.position.y - otherZombie.position.y;
+						var distance = Math.sqrt(diffX * diffX + diffY * diffY);
+						
+						var diffAngle = zombie.rotation.z - otherZombie.rotation.z;
+						if (diffAngle > Math.PI) diff = 2 * Math.PI - diffAngle;
+						if (diffAngle < -Math.PI) diff = -2 * Math.PI + diffAngle;
+			
+						var seen = Math.abs(diffAngle) <= fov;
+	
+						
+						// Separate
+						if (distance < 10){
+							zombie.dx = diffX / distance / 2;
+							zombie.dy = diffY / distance / 2; 
+						}
+						// Align speed
+						else if (distance < 50){
+							if(!seen) continue;
+							alignx += otherZombie.dx;
+							aligny += otherZombie.dy;
+							align = true;
+							ac += 1;
+						}
+
+							// Separation: röra sig ifrån den?
+							
+							// Alignment: hastigheten med flocken?
+							
+							// Cohesion: Röra sig mot flocken?
+						
+						// ---------------------------------------------			
+					}
+					
+					if(align){
+						avgdx = alignx / ac;
+						avgdy = aligny / ac;
+						
+						avgdist = Math.sqrt(avgdx*avgdx + avgdy*avgdy);
+						
+						zombie.dx = (zombie.dx + avgdx / avgdist) / 2;
+						zombie.dy = (zombie.dy + avgdy / avgdist) / 2;
+						
+					}
+	
+					
+					// ---------------------------------------------
+					// Update position on zombie
+					if ((zombie.position.x + zombie.dx) < -planeWidth/2) zombie.dx = -zombie.dx;
+					if ((zombie.position.y + zombie.dy) < -planeHeight/2) zombie.dy = -zombie.dy;
+					if ((zombie.position.x + zombie.dx) > planeWidth/2) zombie.dx = -zombie.dx;
+					if ((zombie.position.y + zombie.dy) > planeHeight/2) zombie.dy = -zombie.dy;
+			
+					zombie.position.x += zombie.dx * speed;
+					zombie.position.y += zombie.dy * speed;	
+					zombie.rotation.z = Math.atan2(zombie.dx, zombie.dy);
+				}
+				
+			}
+			
 		</script>
 	</body>
 </html>
