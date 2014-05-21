@@ -16,8 +16,8 @@
 			var planeHeight = 600;
 			var zombies = 25;
 			var zombieSpeed = 0.5; 
-			var humans = 2;
-			var humanSpeed = 2;
+			var humans = 1;
+			var humanSpeed = 1.5;
 			var flock = [];
 			var people = [];
 			
@@ -51,8 +51,15 @@
 			var numW = planeWidth/100; // how many wide
 			var numH = planeHeight/100; // how many tall
 			var plane = new THREE.Mesh( new THREE.PlaneGeometry( planeWidth, planeHeight, numW, numH ), new   THREE.MeshBasicMaterial( { color: 0x303030, wireframe: true } ) );
-			scene.add(plane);		
+			scene.add(plane);
+		
+/*
+			var grid = new THREE.GridHelper(planeHeight, 100);
+			grid.rotation.x = 90*Math.PI/180;
+			scene.add(grid);
+*/	
 			
+			// -------------------------------------------------------------------------------------
 			//Spawn ZOMBIES
 			for( i = 0; i < zombies; i++ ){
 			
@@ -61,12 +68,16 @@
 				zombie.position.y = Math.floor(Math.random() * planeHeight) - planeHeight / 2;
 				zombie.dx = Math.random() - 0.5;
 				zombie.dy = Math.random() - 0.5;
-				zombie.rotation.z = Math.atan2(zombie.dx, zombie.dy);
+				var len = Math.sqrt(zombie.dx*zombie.dx + zombie.dy*zombie.dy);
+				zombie.dx /= len;
+				zombie.dy /= len;
+				//zombie.rotation.z = Math.atan2(zombie.dx, zombie.dy);
 	
 				flock.push(zombie);				
 				scene.add(zombie);
 			}
 			
+			// -------------------------------------------------------------------------------------
 			//Spawn PEOPLE
 			for( i = 0; i < humans; i++ ){
 				var human = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THREE.MeshBasicMaterial( {color: 0xffff00, wireframe: true}) );		
@@ -74,6 +85,9 @@
 				human.position.y = Math.floor(Math.random() * planeHeight) - planeHeight / 2;
 				human.dx = Math.random() - 0.5;
 				human.dy = Math.random() - 0.5;
+				var len = Math.sqrt(human.dx*human.dx + human.dy*human.dy);
+				human.dx /= len;
+				human.dy /= len;
 				human.rotation.z = Math.atan2(human.dx, human.dy);
 				
 				people.push(human);
@@ -88,7 +102,8 @@
 			render();
 			
 			
-			// ----------------------------------------------------------------------
+			// -------------------------------------------------------------------------------------
+			// -------------------------------------------------------------------------------------
 			// FUNCTIONS
 		
 			// What happens each render
@@ -109,7 +124,7 @@
 			
 			function updateFlock(){
 			
-				// -------------------------------------------------------------------
+				// -------------------------------------------------------------------------------
 				// HUMAN MOVEMENT
 				for(i = 0; i < people.length; i++){
 					human = people[i];
@@ -117,18 +132,14 @@
 					var encounter = 0; 
 					var sepx = 0;
 					var sepy = 0;
-					var avgdx = 0;
-					var avgdy = 0;
 					
 					for (j = 0; j < flock.length; j++){	
+						var zombie = flock[j];
 						
-						var otherZombie = flock[j];
-						
-						// ---------------------------------------------
+						// -----------------------------------------------------------------------
 						// Jämför distance med alla andra zombies
-						
-						var diffX = human.position.x - otherZombie.position.x;
-						var diffY = human.position.y - otherZombie.position.y;
+						var diffX = zombie.position.x - human.position.x ;
+						var diffY = zombie.position.y - human.position.y;
 						var distance = Math.sqrt(diffX * diffX + diffY * diffY);				
 						
 						// If caught
@@ -136,35 +147,65 @@
 							console.log("Get caught n00b!");
 						}
 						
-						// Separate
-						else if (distance <= 80){
-							sepx += diffX / distance;
-							sepy += diffY / distance; 
+						// Separate from zombies
+						if (distance <= 100){
+							sepx += diffX;
+							sepy += diffY; 
 							encounter += 1;
-						}					
+						}	
+										
 					}
 					
+					// ------------------------------------------------------------------------------
 					// TODO: Funker ej som det borde, för buggat. 
 					if(encounter){	
+					
 						// Vector towards the center
-						avgdx = sepx - human.position.x;
-						avgdy = sepy - human.position.y;		
+						var avgdx = -(sepx / encounter);
+						var avgdy = -(sepy / encounter);		
 						dist = Math.sqrt(avgdx * avgdx + avgdy * avgdy);
 						
-						human.dx = human.dx * 0.5 + sepy * 0.5;
-						human.dy = human.dy * 0.5 + sepy * 0.5;
+						human.dx = human.dx * 0.8 + avgdx/dist * 0.2;
+						human.dy = human.dy * 0.8 + avgdy/dist * 0.2;
+						
+/*
+						// Normalize to Length = 1
+						var dxdyLen = Math.sqrt(human.dx*human.dx + human.dy*human.dy);
+						human.dx /= dxdyLen;
+						human.dy /= dxdyLen;	
+*/		
 					}				
 					
-					// ---------------------------------------------
-					// Update position on human
-					if ((human.position.x + human.dx) < -planeWidth/2) human.dx = -human.dx;
-					if ((human.position.y + human.dy) < -planeHeight/2) human.dy = -human.dy;
-					if ((human.position.x + human.dx) > planeWidth/2) human.dx = -human.dx;
-					if ((human.position.y + human.dy) > planeHeight/2) human.dy = -human.dy;
-			
+					// ------------------------------------------------------------------------------
+					// If close to wall, make sure to turn
+/*
+					var leftwall = human.position.x + human.dx + planeWidth/2;
+					var rightwall = human.position.x + human.dx - planeWidth/2;
+					var lowerwall = human.position.y + human.dy + planeHeight/2;
+					var upperwall = human.position.y + human.dy - planeHeight/2;
+					
+					if (leftwall < 20) human.dx = human.dx*0.6 + (-human.dx)/(Math.sqrt(leftwall*lefwall))*0.4;		//Left
+					if (rightwall > -20) human.dx = human.dx*0.6 + (-human.dx)/(Math.sqrt(rightwall*rightwall))*0.4;//Right
+					if (lowerwall < 20) human.dy = human.dx*0.6 + (-human.dx)/(Math.sqrt(lowerwall*lowerwall))* 0.4;//Lower
+					if (upperwall > -20) human.dy = human.dx*0.6 + (-human.dx)/(Math.sqrt(upperwall*upperwall))* 0.4;//Upper
+*/
+					
+					// ------------------------------------------------------------------------------
+					// Make sure not to leave grid
+					if ((human.position.x + human.dx) < -planeWidth/2) human.dx = -human.dx;			//Left
+					if ((human.position.x + human.dx) > planeWidth/2) human.dx = -human.dx;				//Right
+					if ((human.position.y + human.dy) < -planeHeight/2) human.dy = -human.dy;			//Lower
+					if ((human.position.y + human.dy) > planeHeight/2) human.dy = -human.dy;			//Upper
+					
+					// Normalize to Length = 1
+					var dxdyLen = Math.sqrt(human.dx*human.dx + human.dy*human.dy);
+					human.dx /= dxdyLen;
+					human.dy /= dxdyLen;
+					
+					// Update position & rotation
 					human.position.x += human.dx * humanSpeed;
 					human.position.y += human.dy * humanSpeed;	
-					human.rotation.z = Math.atan2(human.dx, human.dy);
+					human.rotation.z = Math.atan2(human.dx, human.dy) - Math.PI / 2; // TODO: Rotation not working correctly
 				}
 				
 				
@@ -184,43 +225,34 @@
 					
 					for (j = 0; j < people.length; j++){	
 						
-						var otherZombie = people[j];
+						var human = people[j];
 						
 						// ---------------------------------------------
-						//TODO: Jämför distance med alla andra zombies
+						//TODO: Jämför distance med alla humans
 						
-						var diffX = zombie.position.x - otherZombie.position.x;
-						var diffY = zombie.position.y - otherZombie.position.y;
+						var diffX = zombie.position.x - human.position.x;
+						var diffY = zombie.position.y - human.position.y;
 						var distance = Math.sqrt(diffX * diffX + diffY * diffY);
 						
-						var diffAngle = zombie.rotation.z - otherZombie.rotation.z;
+						var diffAngle = zombie.rotation.z - human.rotation.z;
 						if (diffAngle > Math.PI) diffAngle = 2 * Math.PI - diffAngle;
 						if (diffAngle < -Math.PI) diffAngle = -2 * Math.PI + diffAngle;
 			
 						var seen = Math.abs(diffAngle) <= fov;
 	
-						// Align speed
-						if (distance <= 50){
+						// Chase if spotted
+						 if (distance <= 150){
 							if(!seen) continue;
-							alignx += otherZombie.dx;
-							aligny += otherZombie.dy;
-							align = true;
-							ac += 1;
-						}
-						// Cohesion
-						else if (distance <= 100){
-							if(!seen) continue;
-							cohesionx += otherZombie.position.x;
-							cohesiony += otherZombie.position.y;
+							cohesionx += human.position.x;
+							cohesiony += human.position.y;
 							cohesion = true;
 							cc += 1;
-						}
-						// ---------------------------------------------			
+						}		
 					}
 					
 					for (k = 0; k < flock.length; k++){	
 						if(i == k) continue;
-						
+
 						var otherZombie = flock[k];
 						
 						// ---------------------------------------------
@@ -238,12 +270,12 @@
 	
 						
 						// Separate
-						if (distance <= 20){
-							zombie.dx = diffX / distance;
-							zombie.dy = diffY / distance; 
+						if (distance <= 25){
+							zombie.dx = zombie.dx * 0.8 + diffX / distance * 0.2;
+							zombie.dy = zombie.dy * 0.8 + diffY / distance * 0.2; 
 						}
 						// Align speed
-						if (distance <= 40){
+						else if (distance <= 50){
 							if(!seen) continue;
 							alignx += otherZombie.dx;
 							aligny += otherZombie.dy;
@@ -251,8 +283,9 @@
 							ac += 1;
 						}
 						// Cohesion
-						else if (distance <= 70){
+						else if (distance <= 90){
 							if(!seen) continue;
+							continue; 								// TODO: Ska de grupperas på avstånd? 
 							cohesionx += otherZombie.position.x;
 							cohesiony += otherZombie.position.y;
 							cohesion = true;
@@ -265,11 +298,15 @@
 					if(align){
 						avgdx = alignx / ac;
 						avgdy = aligny / ac;
-						
 						dist = Math.sqrt(avgdx*avgdx + avgdy*avgdy);
 						
-						zombie.dx = (zombie.dx + avgdx / dist) / 2;
-						zombie.dy = (zombie.dy + avgdy / dist) / 2;	
+						zombie.dx = zombie.dx * 0.95 + avgdx / dist * 0.05;
+						zombie.dy = zombie.dy * 0.95 + avgdy / dist * 0.05;	
+
+						// Normalize
+						dxdyLen = Math.sqrt(zombie.dx*zombie.dx + zombie.dy*zombie.dy);
+						zombie.dx /= dxdyLen;
+						zombie.dy /= dxdyLen;
 					}
 					
 					if(cohesion){
@@ -282,8 +319,13 @@
 						avgdy = cohesiony - zombie.position.y;		
 						dist = Math.sqrt(avgdx * avgdx + avgdy * avgdy);
 						
-						zombie.dx = zombie.dx * 0.3 + avgdx / dist * 0.7;
-						zombie.dy = zombie.dy * 0.3 + avgdy / dist * 0.7;	
+						zombie.dx = zombie.dx * 0.9 + avgdx / dist * 0.1;
+						zombie.dy = zombie.dy * 0.9 + avgdy / dist * 0.1;	
+						
+						// Normalize
+						dxdyLen = Math.sqrt(zombie.dx*zombie.dx + zombie.dy*zombie.dy);
+						zombie.dx /= dxdyLen;
+						zombie.dy /= dxdyLen;
 					}
 	
 					
@@ -293,10 +335,11 @@
 					if ((zombie.position.y + zombie.dy) < -planeHeight/2) zombie.dy = -zombie.dy;
 					if ((zombie.position.x + zombie.dx) > planeWidth/2) zombie.dx = -zombie.dx;
 					if ((zombie.position.y + zombie.dy) > planeHeight/2) zombie.dy = -zombie.dy;
-			
+					
 					zombie.position.x += zombie.dx * zombieSpeed;
 					zombie.position.y += zombie.dy * zombieSpeed;	
-					zombie.rotation.z = Math.atan2(zombie.dx, zombie.dy);
+					//zombie.rotation.z = Math.atan2(zombie.dx, zombie.dy);
+					
 				}
 				
 			}
