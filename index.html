@@ -11,7 +11,6 @@
 		<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
 		<script src="js/three.min.js"></script>
 		<script src="js/OrbitControls.js"></script>
-		<script src="js/stats.js"> </script>
 		<script>
 		
 			//----------------------------------------------------------
@@ -63,7 +62,7 @@
 			// -------------------------------------------------------------------------------------
 			//Spawn ZOMBIES & People
 			for( i = 0; i < zombies; i++ ) spawnZombie();
-			for( i = 0; i < humans; i++ ) spawnHuman();
+			for( i = 0; i < humans; i++ ) spawnHuman();			
 			
 			// START THE ANIMATION
 			render();
@@ -92,6 +91,7 @@
 			// Add Zombies
 			function spawnZombie(){
 				var zombie = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THREE.MeshBasicMaterial( {color: 0xff0000, wireframe: true}) );		
+				
 				zombie.position.x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
 				zombie.position.y = Math.floor(Math.random() * planeHeight) - planeHeight / 2;
 				zombie.dx = Math.random() - 0.5;
@@ -99,7 +99,7 @@
 				var len = Math.sqrt(zombie.dx*zombie.dx + zombie.dy*zombie.dy);
 				zombie.dx /= len;
 				zombie.dy /= len;
-				zombie.rotation.z = Math.atan2(zombie.dx, zombie.dy);
+				zombie.rotation.z = Math.atan2(zombie.dy, zombie.dx);
 	
 				flock.push(zombie);				
 				scene.add(zombie);
@@ -117,7 +117,7 @@
 				human.dx /= len;
 				human.dy /= len;
 				human.bitten = 0;
-				human.rotation.z = Math.atan2(human.dx, human.dy);
+				human.rotation.z = Math.atan2(human.dy, human.dx);
 				
 				people.push(human);
 				scene.add(human);
@@ -146,7 +146,7 @@
 						// If caught
 						if(distance <= 20 ){
 							human.bitten += 1;
-							if(human.bitten >= 300) console.log("u dead son");
+							if(human.bitten >= 100) console.log("u dead son");
 						}
 						
 						// Separate from zombies
@@ -206,7 +206,7 @@
 					// Update position & rotation
 					human.position.x += human.dx * humanSpeed;
 					human.position.y += human.dy * humanSpeed;	
-					human.rotation.z = Math.atan2(human.dx, human.dy) - Math.PI / 2; // TODO: Rotation not working correctly
+					human.rotation.z = Math.atan2(human.dy, human.dx) + Math.PI/2; // TODO: Rotation not working correctly
 				}
 				
 				
@@ -343,44 +343,62 @@
 					
 					zombie.position.x += zombie.dx * zombieSpeed;
 					zombie.position.y += zombie.dy * zombieSpeed;	
-					zombie.rotation.z = Math.atan2(zombie.dx, zombie.dy);
+					zombie.rotation.z = Math.atan2(zombie.dy, zombie.dx) + Math.PI/2;
 					
 				}
 				
 			}
 			
-			function moreZombies(){
+			function addZombies(){
 				spawnZombie();
 				$("#msg").html(flock.length + " zombies");
 				$("#info").stop(true).slideDown(300).delay(400).fadeOut(300);
 			}
-			function moreHumans(){
+			function addHumans(){
 				spawnHuman();
 				$("#msg").html(people.length + " humans");
 				$("#info").stop(true).slideDown(300).delay(400).fadeOut(300);
+			}
+			
+			// TODO: Tar bort från listan, men inte grafiskt. 
+			function removeZombies(){
+				if(flock.length > 1){
+					scene.remove(flock[0]);
+					flock.splice(0,1);
+					$("#msg").html(flock.length + " zombies");
+					$("#info").stop(true).slideDown(300).delay(400).fadeOut(300);
+				}
+			}
+			function removeHumans(){
+				if(people.length > 1){			
+					scene.remove(people[0]);
+					people.splice(0,1);
+					$("#msg").html(people.length + " humans");
+					$("#info").stop(true).slideDown(300).delay(400).fadeOut(300);
+				}
 			}
 			
 		</script>
 		
 		<div id="controls">
 			<p>
-				<button class="addbtn btn btn-success" onclick="moreZombies()">
+				<button class="addbtn btn btn-success" onclick="addZombies()">
 					<span class="glyphicon glyphicon-plus"></span> 
 				</button>
-				<span class="label label-danger">Zombie</span>
-				<button class="addbtn btn btn-danger">
+				<button class="addbtn btn btn-danger" onclick="removeZombies()">
 					<span class="glyphicon glyphicon-minus"></span> 
 				</button>
+				<span class="label label-danger" id="zlbl">Zombie</span>
 			</p>
 			
 			<p>
-				<button class="addbtn btn btn-success" onclick="moreHumans()">
+				<button class="addbtn btn btn-success" onclick="addHumans()">
 					<span class="glyphicon glyphicon-plus"></span> 
 				</button>
-				<span class="label label-warning">Human</span>
-				<button class="addbtn btn btn-danger">
+				<button class="addbtn btn btn-danger" onclick="removeHumans()">
 					<span class="glyphicon glyphicon-minus"></span> 
 				</button>
+				<span class="label label-warning" id="hlbl">Human</span>
 			</p>
 		</div> <!-- Controls -->
 		
