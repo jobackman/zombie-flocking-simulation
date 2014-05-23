@@ -1,0 +1,22 @@
+#controls{
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	margin-bottom: 2em;
+	margin-right: 2em;
+}
+
+.addbtn{
+	padding: !important;
+}
+
+.messages{
+	position: absolute;
+	top: 0;
+	display: none;
+	left: 40%;
+}
+
+.btn{
+	border-radius: 20px;
+}

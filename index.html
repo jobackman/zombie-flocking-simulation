@@ -5,16 +5,20 @@
 	</head>
 
 	<body> 
+			<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+		<link rel="stylesheet" href="css/style.css">
 		<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
 		<script src="js/three.min.js"></script>
 		<script src="js/OrbitControls.js"></script>
+		<script src="js/stats.js"> </script>
 		<script>
 		
 			//----------------------------------------------------------
 			// GLOBAL VARIABLES
 			var planeWidth = 1000;
 			var planeHeight = 600;
-			var zombies = 25;
+			var zombies = 10;
 			var zombieSpeed = 0.5; 
 			var humans = 1;
 			var humanSpeed = 1.5;
@@ -28,7 +32,7 @@
 			var cohesionx;
 			var cohesiony;
 			
-			var fov = Math.PI * 0.5;
+			var fov = Math.PI / 2;
 			
 			//----------------------------------------------------------
 			// INITIALIZE
@@ -39,10 +43,13 @@
 			document.body.appendChild(renderer.domElement);
 			
 			// camera
-			var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 2000);
+			var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 3000);
 			camera.position.y = -planeHeight - 100;
 			camera.position.z = planeHeight + 100;
 			camera.rotation.x = 45 * (Math.PI / 180);
+			
+			// OrbitControls so that we can pan around with the mouse.
+			controls = new THREE.OrbitControls(camera, renderer.domElement);
 			
 			// scene
 			var scene = new THREE.Scene();
@@ -53,50 +60,10 @@
 			var plane = new THREE.Mesh( new THREE.PlaneGeometry( planeWidth, planeHeight, numW, numH ), new   THREE.MeshBasicMaterial( { color: 0x303030, wireframe: true } ) );
 			scene.add(plane);
 		
-/*
-			var grid = new THREE.GridHelper(planeHeight, 100);
-			grid.rotation.x = 90*Math.PI/180;
-			scene.add(grid);
-*/	
-			
 			// -------------------------------------------------------------------------------------
-			//Spawn ZOMBIES
-			for( i = 0; i < zombies; i++ ){
-			
-				var zombie = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THREE.MeshBasicMaterial( {color: 0xff0000, wireframe: true}) );		
-				zombie.position.x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
-				zombie.position.y = Math.floor(Math.random() * planeHeight) - planeHeight / 2;
-				zombie.dx = Math.random() - 0.5;
-				zombie.dy = Math.random() - 0.5;
-				var len = Math.sqrt(zombie.dx*zombie.dx + zombie.dy*zombie.dy);
-				zombie.dx /= len;
-				zombie.dy /= len;
-				//zombie.rotation.z = Math.atan2(zombie.dx, zombie.dy);
-	
-				flock.push(zombie);				
-				scene.add(zombie);
-			}
-			
-			// -------------------------------------------------------------------------------------
-			//Spawn PEOPLE
-			for( i = 0; i < humans; i++ ){
-				var human = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THREE.MeshBasicMaterial( {color: 0xffff00, wireframe: true}) );		
-				human.position.x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
-				human.position.y = Math.floor(Math.random() * planeHeight) - planeHeight / 2;
-				human.dx = Math.random() - 0.5;
-				human.dy = Math.random() - 0.5;
-				var len = Math.sqrt(human.dx*human.dx + human.dy*human.dy);
-				human.dx /= len;
-				human.dy /= len;
-				human.rotation.z = Math.atan2(human.dx, human.dy);
-				
-				people.push(human);
-				scene.add(human);
-			}
-
-			
-			// Add OrbitControls so that we can pan around with the mouse.
-			controls = new THREE.OrbitControls(camera, renderer.domElement);
+			//Spawn ZOMBIES & People
+			for( i = 0; i < zombies; i++ ) spawnZombie();
+			for( i = 0; i < humans; i++ ) spawnHuman();
 			
 			// START THE ANIMATION
 			render();
@@ -105,8 +72,8 @@
 			// -------------------------------------------------------------------------------------
 			// -------------------------------------------------------------------------------------
 			// FUNCTIONS
-		
-			// What happens each render
+			
+			// Main rendering function
 			function render(){	 	
 							
 				// render
@@ -121,9 +88,43 @@
 				});
 			}
 			
+			// -------------------------------------------------------------
+			// Add Zombies
+			function spawnZombie(){
+				var zombie = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THREE.MeshBasicMaterial( {color: 0xff0000, wireframe: true}) );		
+				zombie.position.x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
+				zombie.position.y = Math.floor(Math.random() * planeHeight) - planeHeight / 2;
+				zombie.dx = Math.random() - 0.5;
+				zombie.dy = Math.random() - 0.5;
+				var len = Math.sqrt(zombie.dx*zombie.dx + zombie.dy*zombie.dy);
+				zombie.dx /= len;
+				zombie.dy /= len;
+				zombie.rotation.z = Math.atan2(zombie.dx, zombie.dy);
+	
+				flock.push(zombie);				
+				scene.add(zombie);
+			}
+			
+			// --------------------------------------------------------------
+			// Add Human
+			function spawnHuman(){
+				var human = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THREE.MeshBasicMaterial( {color: 0xffff00, wireframe: true}) );		
+				human.position.x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
+				human.position.y = Math.floor(Math.random() * planeHeight) - planeHeight / 2;
+				human.dx = Math.random() - 0.5;
+				human.dy = Math.random() - 0.5;
+				var len = Math.sqrt(human.dx*human.dx + human.dy*human.dy);
+				human.dx /= len;
+				human.dy /= len;
+				human.bitten = 0;
+				human.rotation.z = Math.atan2(human.dx, human.dy);
+				
+				people.push(human);
+				scene.add(human);
+			}
+			
 			
 			function updateFlock(){
-			
 				// -------------------------------------------------------------------------------
 				// HUMAN MOVEMENT
 				for(i = 0; i < people.length; i++){
@@ -143,8 +144,9 @@
 						var distance = Math.sqrt(diffX * diffX + diffY * diffY);				
 						
 						// If caught
-						if(distance <= 20){
-							console.log("Get caught n00b!");
+						if(distance <= 20 ){
+							human.bitten += 1;
+							if(human.bitten >= 300) console.log("u dead son");
 						}
 						
 						// Separate from zombies
@@ -152,14 +154,13 @@
 							sepx += diffX;
 							sepy += diffY; 
 							encounter += 1;
-						}	
-										
+						}						
 					}
 					
 					// ------------------------------------------------------------------------------
-					// TODO: Funker ej som det borde, för buggat. 
+					// Separate from zombies 
 					if(encounter){	
-					
+
 						// Vector towards the center
 						var avgdx = -(sepx / encounter);
 						var avgdy = -(sepy / encounter);		
@@ -168,39 +169,39 @@
 						human.dx = human.dx * 0.8 + avgdx/dist * 0.2;
 						human.dy = human.dy * 0.8 + avgdy/dist * 0.2;
 						
-/*
-						// Normalize to Length = 1
-						var dxdyLen = Math.sqrt(human.dx*human.dx + human.dy*human.dy);
-						human.dx /= dxdyLen;
-						human.dy /= dxdyLen;	
-*/		
 					}				
 					
 					// ------------------------------------------------------------------------------
 					// If close to wall, make sure to turn
-/*
 					var leftwall = human.position.x + human.dx + planeWidth/2;
 					var rightwall = human.position.x + human.dx - planeWidth/2;
 					var lowerwall = human.position.y + human.dy + planeHeight/2;
 					var upperwall = human.position.y + human.dy - planeHeight/2;
 					
-					if (leftwall < 20) human.dx = human.dx*0.6 + (-human.dx)/(Math.sqrt(leftwall*lefwall))*0.4;		//Left
-					if (rightwall > -20) human.dx = human.dx*0.6 + (-human.dx)/(Math.sqrt(rightwall*rightwall))*0.4;//Right
-					if (lowerwall < 20) human.dy = human.dx*0.6 + (-human.dx)/(Math.sqrt(lowerwall*lowerwall))* 0.4;//Lower
-					if (upperwall > -20) human.dy = human.dx*0.6 + (-human.dx)/(Math.sqrt(upperwall*upperwall))* 0.4;//Upper
-*/
+					// Keep an eye on far wall if zombie-encounter
+					if(encounter){
+						if (leftwall < 80) human.dx = human.dx * 0.9 + (0.5) * 0.1;			//Left
+						if (rightwall > -80) human.dx = human.dx * 0.9 + (-0.5) * 0.1;		//Right
+						if (lowerwall < 80) human.dy = human.dy * 0.9 + (0.5) * 0.1;		//Lower
+						if (upperwall > -80) human.dy = human.dy * 0.9 + (-0.5) * 0.1;		//Upper
+					}
 					
-					// ------------------------------------------------------------------------------
+					if (leftwall < 40) human.dx = human.dx * 0.9 + (1) * 0.1;				//Left
+					if (rightwall > -40) human.dx = human.dx * 0.9 + (-1) * 0.1;			//Right
+					if (lowerwall < 40) human.dy = human.dy * 0.9 + (1) * 0.1;				//Lower
+					if (upperwall > -40) human.dy = human.dy * 0.9 + (-1) * 0.1;			//Upper
+					
 					// Make sure not to leave grid
 					if ((human.position.x + human.dx) < -planeWidth/2) human.dx = -human.dx;			//Left
 					if ((human.position.x + human.dx) > planeWidth/2) human.dx = -human.dx;				//Right
 					if ((human.position.y + human.dy) < -planeHeight/2) human.dy = -human.dy;			//Lower
 					if ((human.position.y + human.dy) > planeHeight/2) human.dy = -human.dy;			//Upper
 					
+					// ------------------------------------------------------------------------------
 					// Normalize to Length = 1
-					var dxdyLen = Math.sqrt(human.dx*human.dx + human.dy*human.dy);
-					human.dx /= dxdyLen;
-					human.dy /= dxdyLen;
+					var len = Math.sqrt(human.dx*human.dx + human.dy*human.dy);
+					human.dx /= len;
+					human.dy /= len;
 					
 					// Update position & rotation
 					human.position.x += human.dx * humanSpeed;
@@ -241,7 +242,7 @@
 						var seen = Math.abs(diffAngle) <= fov;
 	
 						// Chase if spotted
-						 if (distance <= 150){
+						 if (distance <= 200){
 							if(!seen) continue;
 							cohesionx += human.position.x;
 							cohesiony += human.position.y;
@@ -255,8 +256,8 @@
 
 						var otherZombie = flock[k];
 						
-						// ---------------------------------------------
-						//TODO: Jämför distance med alla andra zombies
+						// ----------------------------------------------------------
+						// 
 						
 						var diffX = zombie.position.x - otherZombie.position.x;
 						var diffY = zombie.position.y - otherZombie.position.y;
@@ -327,7 +328,11 @@
 						zombie.dx /= dxdyLen;
 						zombie.dy /= dxdyLen;
 					}
-	
+					
+					// Normalize to Length = 1
+					var len = Math.sqrt(human.dx*human.dx + human.dy*human.dy);
+					zombie.dx /= len;
+					zombie.dy /= len;
 					
 					// ---------------------------------------------
 					// Update position on zombie
@@ -338,12 +343,57 @@
 					
 					zombie.position.x += zombie.dx * zombieSpeed;
 					zombie.position.y += zombie.dy * zombieSpeed;	
-					//zombie.rotation.z = Math.atan2(zombie.dx, zombie.dy);
+					zombie.rotation.z = Math.atan2(zombie.dx, zombie.dy);
 					
 				}
 				
 			}
 			
+			function moreZombies(){
+				spawnZombie();
+				$("#msg").html(flock.length + " zombies");
+				$("#info").stop(true).slideDown(300).delay(400).fadeOut(300);
+			}
+			function moreHumans(){
+				spawnHuman();
+				$("#msg").html(people.length + " humans");
+				$("#info").stop(true).slideDown(300).delay(400).fadeOut(300);
+			}
+			
 		</script>
+		
+		<div id="controls">
+			<p>
+				<button class="addbtn btn btn-success" onclick="moreZombies()">
+					<span class="glyphicon glyphicon-plus"></span> 
+				</button>
+				<span class="label label-danger">Zombie</span>
+				<button class="addbtn btn btn-danger">
+					<span class="glyphicon glyphicon-minus"></span> 
+				</button>
+			</p>
+			
+			<p>
+				<button class="addbtn btn btn-success" onclick="moreHumans()">
+					<span class="glyphicon glyphicon-plus"></span> 
+				</button>
+				<span class="label label-warning">Human</span>
+				<button class="addbtn btn btn-danger">
+					<span class="glyphicon glyphicon-minus"></span> 
+				</button>
+			</p>
+		</div> <!-- Controls -->
+		
+		<div id="info" class="messages">
+			<div class="alert alert-warning alert-dismissable">
+				<strong id="msg">Warning!</strong>
+			</div>
+		</div>
+		<div id="dead"class="messages">
+			<div class="alert alert-danger alert-dismissable">
+				<strong id="deadmsg">#rekt scrub</strong>
+			</div>
+		</div>
+		
 	</body>
 </html>
