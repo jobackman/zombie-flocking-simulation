@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<style> body {margin: 0px;}</style>
+		<style> </style>
 	</head>
 
 	<body> 
@@ -17,24 +17,28 @@
 			// GLOBAL VARIABLES
 			var planeWidth = 1000;
 			var planeHeight = 600;
-			var zombies = 10;
-			var zombieSpeed = 0.5; 
-			var humans = 1;
+			var zombies = 15;
+			var zombieSpeed = 0.2; 
+			var humans = 3;
 			var humanSpeed = 1.5;
 			var flock = [];
 			var people = [];
-			
+			var cubes = [];		
+			var numCubes = 15;	
 			var align;
 			var alignx;
 			var aligny;
 			var cohesion;
 			var cohesionx;
 			var cohesiony;
-			
-			var fov = Math.PI / 2;
+						
+			var fov = 120 * Math.PI / 180;
 			
 			//----------------------------------------------------------
 			// INITIALIZE
+			
+			// clock for animations
+			var clock = new THREE.Clock();
 			
 			// renderer
 			var renderer = new THREE.WebGLRenderer();
@@ -54,11 +58,49 @@
 			var scene = new THREE.Scene();
 
 			// GRID
-			var numW = planeWidth/100; // how many wide
-			var numH = planeHeight/100; // how many tall
+			var numW = planeWidth/50; // how many wide
+			var numH = planeHeight/50; // how many tall
 			var plane = new THREE.Mesh( new THREE.PlaneGeometry( planeWidth, planeHeight, numW, numH ), new   THREE.MeshBasicMaterial( { color: 0x303030, wireframe: true } ) );
 			scene.add(plane);
-		
+			
+			// CUBES
+/*
+			var geometry = new THREE.BoxGeometry( 50, 50, 50 );
+			var material = new THREE.MeshLambertMaterial( { color: 0xffffff, shading: THREE.FlatShading, overdraw: 0.5 } );
+
+			for ( var i = 0; i < numCubes; i ++ ) {
+				var cube = new THREE.Mesh( geometry, material );
+
+				cube.scale.z = Math.floor( Math.random() * 2 + 1 );
+
+				cube.position.x = Math.floor( ( Math.random() * planeWidth - planeWidth/2) / 50 ) * 50 + 25;
+				cube.position.z = cube.scale.z * 50 / 2;
+				cube.position.y = Math.floor( ( Math.random() * planeHeight -planeHeight/2) / 50 ) * 50 + 25;
+				
+				cubes.push(cube);
+				scene.add(cube);
+			}
+*/
+			
+			// LIGHTS
+			var ambientLight = new THREE.AmbientLight( 1 * 0x10 );
+			scene.add( ambientLight );
+
+			var directionalLight = new THREE.DirectionalLight( 0.7 * 0xffffff );
+			directionalLight.position.x = Math.random() - 0.5;
+			directionalLight.position.y = Math.random() - 0.5;
+			directionalLight.position.z = Math.random();
+			directionalLight.position.normalize();
+			scene.add( directionalLight );
+
+			var directionalLight = new THREE.DirectionalLight( 0.7 * 0xffffff );
+			directionalLight.position.x = Math.random() - 0.5;
+			directionalLight.position.y = Math.random() - 0.5;
+			directionalLight.position.z = Math.random() - 0.5;
+			directionalLight.position.normalize();
+			scene.add( directionalLight );
+				
+				
 			// -------------------------------------------------------------------------------------
 			//Spawn ZOMBIES & People
 			for( i = 0; i < zombies; i++ ) spawnZombie();
@@ -80,6 +122,14 @@
 				controls.update();
 				
 				updateFlock();
+				
+				// update model animations
+				var delta = clock.getDelta();
+				
+				for ( var i = 0; i < flock.length; i ++ ) {
+					var zombie = flock[ i ];
+					zombie.updateAnimation( 1000 * delta );
+				}
 								
 				// request new frame
 				requestAnimationFrame(function(){
@@ -89,7 +139,9 @@
 			
 			// -------------------------------------------------------------
 			// Add Zombies
+
 			function spawnZombie(){
+/*
 				var zombie = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THREE.MeshBasicMaterial( {color: 0xff0000, wireframe: true}) );		
 				
 				zombie.position.x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
@@ -103,6 +155,38 @@
 	
 				flock.push(zombie);				
 				scene.add(zombie);
+*/
+					
+			var loader = new THREE.JSONLoader();
+				loader.load( "untitled.js", function( geometry ) {
+
+					geometry.computeMorphNormals();
+
+					var material = new THREE.MeshPhongMaterial( { color: 0xfff0000,  shininess: 17,  morphTargets: true, morphNormals: true, vertexColors: THREE.NoColors, shading: THREE.FlatShading } );
+					var zombie = new THREE.MorphAnimMesh( geometry, material );
+
+					zombie.duration = 3000;
+					//zombie.userData.delta = -13;
+					
+					zombie.scale.set(70,70,70);
+					
+					zombie.position.x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
+					zombie.position.y = Math.floor(Math.random() * planeHeight) - planeHeight / 2;
+					zombie.dx = Math.random() - 0.5;
+					zombie.dy = Math.random() - 0.5;
+					var len = Math.sqrt(zombie.dx*zombie.dx + zombie.dy*zombie.dy);
+					zombie.dx /= len;
+					zombie.dy /= len;
+					
+					zombie.rotation.x = 90 * Math.PI / 180;
+					zombie.rotation.y = Math.atan2(zombie.dy, zombie.dx) + Math.PI;
+
+					scene.add( zombie );
+					flock.push( zombie );
+
+			
+				});
+				
 			}
 			
 			// --------------------------------------------------------------
@@ -125,7 +209,7 @@
 			
 			
 			function updateFlock(){
-				// -------------------------------------------------------------------------------
+				// ----------------------------------------------------------------------------------
 				// HUMAN MOVEMENT
 				for(i = 0; i < people.length; i++){
 					human = people[i];
@@ -133,12 +217,13 @@
 					var encounter = 0; 
 					var sepx = 0;
 					var sepy = 0;
+					var runspeed = 1;
 					
+					// ------------------------------------------------------------------------------
+					// Jämför med ALLA zombies
 					for (j = 0; j < flock.length; j++){	
 						var zombie = flock[j];
 						
-						// -----------------------------------------------------------------------
-						// Jämför distance med alla andra zombies
 						var diffX = zombie.position.x - human.position.x ;
 						var diffY = zombie.position.y - human.position.y;
 						var distance = Math.sqrt(diffX * diffX + diffY * diffY);				
@@ -146,11 +231,13 @@
 						// If caught
 						if(distance <= 20 ){
 							human.bitten += 1;
-							if(human.bitten >= 100) console.log("u dead son");
+							if(human.bitten >= 100){
+								// Turn to zombie								
+							}
 						}
 						
 						// Separate from zombies
-						if (distance <= 100){
+						else if (distance <= 100){
 							sepx += diffX;
 							sepy += diffY; 
 							encounter += 1;
@@ -165,11 +252,15 @@
 						var avgdx = -(sepx / encounter);
 						var avgdy = -(sepy / encounter);		
 						dist = Math.sqrt(avgdx * avgdx + avgdy * avgdy);
-						
 						human.dx = human.dx * 0.8 + avgdx/dist * 0.2;
 						human.dy = human.dy * 0.8 + avgdy/dist * 0.2;
 						
+						runspeed = 1.5;
 					}				
+					
+					// ------------------------------------------------------------------------------
+					// TODO: Jämför alla hus
+
 					
 					// ------------------------------------------------------------------------------
 					// If close to wall, make sure to turn
@@ -204,8 +295,8 @@
 					human.dy /= len;
 					
 					// Update position & rotation
-					human.position.x += human.dx * humanSpeed;
-					human.position.y += human.dy * humanSpeed;	
+					human.position.x += human.dx * humanSpeed * runspeed;
+					human.position.y += human.dy * humanSpeed * runspeed;	
 					human.rotation.z = Math.atan2(human.dy, human.dx) + Math.PI/2; // TODO: Rotation not working correctly
 				}
 				
@@ -214,7 +305,7 @@
 				// ZOMBIE MOVEMENT
 				for(i = 0; i < flock.length; i++){
 					zombie = flock[i];
-					
+					zombie.duration = 3000;
 					align = false;
 					alignx = 0;
 					aligny = 0;
@@ -223,6 +314,8 @@
 					cohesionx = 0;
 					cohesiony = 0;
 					cc = 0;
+					
+					var chase = 1;
 					
 					for (j = 0; j < people.length; j++){	
 						
@@ -235,19 +328,20 @@
 						var diffY = zombie.position.y - human.position.y;
 						var distance = Math.sqrt(diffX * diffX + diffY * diffY);
 						
-						var diffAngle = zombie.rotation.z - human.rotation.z;
+						var diffAngle = zombie.rotation.y - human.rotation.z;
 						if (diffAngle > Math.PI) diffAngle = 2 * Math.PI - diffAngle;
 						if (diffAngle < -Math.PI) diffAngle = -2 * Math.PI + diffAngle;
 			
 						var seen = Math.abs(diffAngle) <= fov;
 	
 						// Chase if spotted
-						 if (distance <= 200){
+						if (distance <= 400){
 							if(!seen) continue;
 							cohesionx += human.position.x;
 							cohesiony += human.position.y;
 							cohesion = true;
 							cc += 1;
+							zombie.duration = 500;
 						}		
 					}
 					
@@ -263,7 +357,7 @@
 						var diffY = zombie.position.y - otherZombie.position.y;
 						var distance = Math.sqrt(diffX * diffX + diffY * diffY);
 						
-						var diffAngle = zombie.rotation.z - otherZombie.rotation.z;
+						var diffAngle = zombie.rotation.y - otherZombie.rotation.y;
 						if (diffAngle > Math.PI) diffAngle = 2 * Math.PI - diffAngle;
 						if (diffAngle < -Math.PI) diffAngle = -2 * Math.PI + diffAngle;
 			
@@ -301,8 +395,8 @@
 						avgdy = aligny / ac;
 						dist = Math.sqrt(avgdx*avgdx + avgdy*avgdy);
 						
-						zombie.dx = zombie.dx * 0.95 + avgdx / dist * 0.05;
-						zombie.dy = zombie.dy * 0.95 + avgdy / dist * 0.05;	
+						zombie.dx = zombie.dx * 0.98 + avgdx / dist * 0.02;
+						zombie.dy = zombie.dy * 0.98 + avgdy / dist * 0.02;	
 
 						// Normalize
 						dxdyLen = Math.sqrt(zombie.dx*zombie.dx + zombie.dy*zombie.dy);
@@ -327,6 +421,9 @@
 						dxdyLen = Math.sqrt(zombie.dx*zombie.dx + zombie.dy*zombie.dy);
 						zombie.dx /= dxdyLen;
 						zombie.dy /= dxdyLen;
+						
+						chase = 10.0;
+
 					}
 					
 					// Normalize to Length = 1
@@ -341,9 +438,9 @@
 					if ((zombie.position.x + zombie.dx) > planeWidth/2) zombie.dx = -zombie.dx;
 					if ((zombie.position.y + zombie.dy) > planeHeight/2) zombie.dy = -zombie.dy;
 					
-					zombie.position.x += zombie.dx * zombieSpeed;
-					zombie.position.y += zombie.dy * zombieSpeed;	
-					zombie.rotation.z = Math.atan2(zombie.dy, zombie.dx) + Math.PI/2;
+					zombie.position.x += zombie.dx * zombieSpeed * chase;
+					zombie.position.y += zombie.dy * zombieSpeed * chase;	
+					zombie.rotation.y = Math.atan2(zombie.dy, zombie.dx) + Math.PI;
 					
 				}
 				
