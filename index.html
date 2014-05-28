@@ -140,7 +140,11 @@
 					var zombie = flock[ i ];
 					zombie.updateAnimation( 1000 * delta );
 				}
-								
+				for ( var i = 0; i < people.length; i ++ ) {
+					var human = people[ i ];
+					human.updateAnimation( 1000 * delta );
+				}				
+				
 				// request new frame
 				requestAnimationFrame(function(){
 				    render();
@@ -169,11 +173,11 @@
 */
 					
 			var loader = new THREE.JSONLoader();
-				loader.load( "untitled.js", function( geometry ) {
+				loader.load( "zombie.js", function( geometry ) {
 
 					geometry.computeMorphNormals();
 
-					var material = new THREE.MeshPhongMaterial( { color: 0xfff0000,  shininess: 17,  morphTargets: true, morphNormals: true, vertexColors: THREE.NoColors, shading: THREE.FlatShading } );
+					var material = new THREE.MeshPhongMaterial( { color: 0xff0000,  shininess: 17,  morphTargets: true, morphNormals: true, vertexColors: THREE.NoColors, shading: THREE.FlatShading } );
 					var zombie = new THREE.MorphAnimMesh( geometry, material );
 
 					zombie.duration = 3000;					
@@ -187,8 +191,8 @@
 					zombie.dx /= len;
 					zombie.dy /= len;
 					
-					zombie.rotation.x = 90 * Math.PI / 180;
-					zombie.rotation.y = Math.atan2(zombie.dy, zombie.dx) + Math.PI;
+					//zombie.rotation.x = 90 * Math.PI / 180;
+					zombie.rotation.z = Math.atan2(zombie.dy, zombie.dx) + Math.PI;
 
 					scene.add( zombie );
 					flock.push( zombie );
@@ -201,7 +205,8 @@
 			// --------------------------------------------------------------
 			// Add Human
 			function spawnHuman(){
-				var human = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THREE.MeshBasicMaterial( {color: 0xffff00, wireframe: true}) );		
+				/*
+var human = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THREE.MeshBasicMaterial( {color: 0xffff00, wireframe: true}) );		
 				human.position.x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
 				human.position.y = Math.floor(Math.random() * planeHeight) - planeHeight / 2;
 				human.dx = Math.random() - 0.5;
@@ -214,6 +219,35 @@
 				
 				people.push(human);
 				scene.add(human);
+*/
+				
+				var loader = new THREE.JSONLoader();
+				loader.load( "human.js", function( geometry ) {
+
+					geometry.computeMorphNormals();
+
+					var material = new THREE.MeshPhongMaterial( { color: 0xEEEE00,  shininess: 17,  morphTargets: true, morphNormals: true, vertexColors: THREE.NoColors, shading: THREE.FlatShading } );
+					var human = new THREE.MorphAnimMesh( geometry, material );
+
+					human.duration = 1000;					
+					human.scale.set(30,30,30);
+					
+					human.position.x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
+					human.position.y = Math.floor(Math.random() * planeHeight) - planeHeight / 2;
+					human.dx = Math.random() - 0.5;
+					human.dy = Math.random() - 0.5;
+					var len = Math.sqrt(human.dx*human.dx + human.dy*human.dy);
+					human.dx /= len;
+					human.dy /= len;
+					
+					//human.rotation.x = 90 * Math.PI / 180;
+					human.rotation.z = Math.atan2(human.dy, human.dx) + Math.PI/2;
+
+					scene.add( human );
+					people.push( human );
+
+			
+				});
 			}
 			
 			
@@ -337,7 +371,7 @@
 						var diffY = zombie.position.y - human.position.y;
 						var distance = Math.sqrt(diffX * diffX + diffY * diffY);
 						
-						var diffAngle = zombie.rotation.y - human.rotation.z;
+						var diffAngle = zombie.rotation.z - human.rotation.z;
 						if (diffAngle > Math.PI) diffAngle = 2 * Math.PI - diffAngle;
 						if (diffAngle < -Math.PI) diffAngle = -2 * Math.PI + diffAngle;
 			
@@ -366,7 +400,7 @@
 						var diffY = zombie.position.y - otherZombie.position.y;
 						var distance = Math.sqrt(diffX * diffX + diffY * diffY);
 						
-						var diffAngle = zombie.rotation.y - otherZombie.rotation.y;
+						var diffAngle = zombie.rotation.z - otherZombie.rotation.z;
 						if (diffAngle > Math.PI) diffAngle = 2 * Math.PI - diffAngle;
 						if (diffAngle < -Math.PI) diffAngle = -2 * Math.PI + diffAngle;
 			
@@ -449,7 +483,7 @@
 					
 					zombie.position.x += zombie.dx * zombieSpeed * chase;
 					zombie.position.y += zombie.dy * zombieSpeed * chase;	
-					zombie.rotation.y = Math.atan2(zombie.dy, zombie.dx) + Math.PI;
+					zombie.rotation.z = Math.atan2(zombie.dy, zombie.dx) + Math.PI;
 					
 				}
 				
