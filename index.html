@@ -11,8 +11,9 @@
 		<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
 		<script src="js/three.min.js"></script>
 		<script src="js/OrbitControls.js"></script>
-		<script>
+		<script src="js/stats.min.js"></script>
 		
+		<script>
 			//----------------------------------------------------------
 			// GLOBAL VARIABLES
 			var planeWidth = 1000;
@@ -39,6 +40,15 @@
 			
 			// clock for animations
 			var clock = new THREE.Clock();
+			
+			// stats
+			var container = document.createElement( 'div' );
+			document.body.appendChild( container );
+			
+			var stats = new Stats();
+			stats.domElement.style.position = 'absolute';
+			stats.domElement.style.top = '0px';
+			container.appendChild(stats.domElement);
 			
 			// renderer
 			var renderer = new THREE.WebGLRenderer();
@@ -134,6 +144,7 @@
 				// request new frame
 				requestAnimationFrame(function(){
 				    render();
+				    stats.update();
 				});
 			}
 			
@@ -165,9 +176,7 @@
 					var material = new THREE.MeshPhongMaterial( { color: 0xfff0000,  shininess: 17,  morphTargets: true, morphNormals: true, vertexColors: THREE.NoColors, shading: THREE.FlatShading } );
 					var zombie = new THREE.MorphAnimMesh( geometry, material );
 
-					zombie.duration = 3000;
-					//zombie.userData.delta = -13;
-					
+					zombie.duration = 3000;					
 					zombie.scale.set(70,70,70);
 					
 					zombie.position.x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
@@ -476,7 +485,7 @@
 			}
 			
 		</script>
-		
+				
 		<div id="controls">
 			<p>
 				<button class="addbtn btn btn-success" onclick="addZombies()">
