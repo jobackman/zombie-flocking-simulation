@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<style> </style>
 	</head>
 
 	<body> 
@@ -93,20 +92,20 @@
 */
 			
 			// LIGHTS
-			var ambientLight = new THREE.AmbientLight( 1 * 0x10 );
+			var ambientLight = new THREE.AmbientLight( 0.2 * 0x10 );
 			scene.add( ambientLight );
 
-			var directionalLight = new THREE.DirectionalLight( 0.7 * 0xffffff );
-			directionalLight.position.x = Math.random() - 0.5;
-			directionalLight.position.y = Math.random() - 0.5;
-			directionalLight.position.z = Math.random();
+			var directionalLight = new THREE.DirectionalLight( 0.5 * 0xffffff );
+			directionalLight.position.x = 0.5;
+			directionalLight.position.y = 0.5;
+			directionalLight.position.z = -0.2;
 			directionalLight.position.normalize();
 			scene.add( directionalLight );
 
-			var directionalLight = new THREE.DirectionalLight( 0.7 * 0xffffff );
-			directionalLight.position.x = Math.random() - 0.5;
-			directionalLight.position.y = Math.random() - 0.5;
-			directionalLight.position.z = Math.random() - 0.5;
+			var directionalLight = new THREE.DirectionalLight( 0.5 * 0xffffff );
+			directionalLight.position.x = - 0.5;
+			directionalLight.position.y = - 0.5;
+			directionalLight.position.z = - 0.5;
 			directionalLight.position.normalize();
 			scene.add( directionalLight );
 				
@@ -226,11 +225,11 @@ var human = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THR
 
 					geometry.computeMorphNormals();
 
-					var material = new THREE.MeshPhongMaterial( { color: 0xEEEE00,  shininess: 17,  morphTargets: true, morphNormals: true, vertexColors: THREE.NoColors, shading: THREE.FlatShading } );
+					var material = new THREE.MeshPhongMaterial( { color: 0x00ffff,  shininess: 17,  morphTargets: true, morphNormals: true, vertexColors: THREE.NoColors, shading: THREE.FlatShading } );
 					var human = new THREE.MorphAnimMesh( geometry, material );
 
 					human.duration = 1000;					
-					human.scale.set(30,30,30);
+					human.scale.set(20,20,20);
 					
 					human.position.x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
 					human.position.y = Math.floor(Math.random() * planeHeight) - planeHeight / 2;
@@ -239,6 +238,7 @@ var human = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THR
 					var len = Math.sqrt(human.dx*human.dx + human.dy*human.dy);
 					human.dx /= len;
 					human.dy /= len;
+					human.bitten = 0;
 					
 					//human.rotation.x = 90 * Math.PI / 180;
 					human.rotation.z = Math.atan2(human.dy, human.dx) + Math.PI/2;
@@ -274,8 +274,19 @@ var human = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THR
 						// If caught
 						if(distance <= 20 ){
 							human.bitten += 1;
+						
 							if(human.bitten >= 100){
-								// Turn to zombie								
+								// Turn to zombie	
+								spawnZombie();
+								newzombie = flock[flock.length-1];
+								newzombie.position.x = human.position.x;
+								newzombie.position.y = human.position.y;
+								newzombie.dx = human.dx;
+								newzombie.dy = human.dy;
+								newzombie.rotation.z = human.rotation.z;
+								scene.remove(people[i]);
+								people.splice(i,1);
+								
 							}
 						}
 						
@@ -470,7 +481,7 @@ var human = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THR
 					}
 					
 					// Normalize to Length = 1
-					var len = Math.sqrt(human.dx*human.dx + human.dy*human.dy);
+					var len = Math.sqrt(zombie.dx*zombie.dx + zombie.dy*zombie.dy);
 					zombie.dx /= len;
 					zombie.dy /= len;
 					
@@ -538,7 +549,7 @@ var human = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THR
 				<button class="addbtn btn btn-danger" onclick="removeHumans()">
 					<span class="glyphicon glyphicon-minus"></span> 
 				</button>
-				<span class="label label-warning" id="hlbl">Human</span>
+				<span class="label label-info" id="hlbl">Human</span>
 			</p>
 		</div> <!-- Controls -->
 		
