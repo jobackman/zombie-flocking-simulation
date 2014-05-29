@@ -19,12 +19,12 @@
 			var planeHeight = 600;
 			
 			// Zombie: Amount, Walkspeed, Runspeed
-			var zombies = 40;
+			var zombies = 15;
 			var zWalk = 0.2; 
 			var zRun = 2.0;
 			
 			// Human: Amount, Walkspeed, Runspeed
-			var humans = 0;
+			var humans = 30;
 			var hWalk = 1.0;
 			var hRun = 2.2;
 			
@@ -231,22 +231,16 @@
 						var diffY = zombie.position.y - human.position.y;
 						var distance = Math.sqrt(diffX * diffX + diffY * diffY);				
 						
-						// If caught, lose more health
-						if(distance <= 20 ){
-							human.health -= 1;
-						
-							if(human.health == 0){
-								// Turn to zombie, spawn zombie at same position	
-								var x = human.position.x;
-								var y = human.position.y;
-								spawnZombie(x,y); 
-								scene.remove(people[i]);
-								people.splice(i,1);
-								break;
-								
-							}
+						if(human.health <= 0){
+							// Turn to zombie, spawn zombie at same position	
+							var x = human.position.x;
+							var y = human.position.y;
+							spawnZombie(x,y); 
+							scene.remove(people[i]);
+							people.splice(i,1);
+							break;		
 						}
-						
+
 						// Separate from zombies
 						else if (distance <= 100){
 							sepx += diffX;
@@ -337,9 +331,12 @@
 						if (diffAngle < -Math.PI) diffAngle = -2 * Math.PI + diffAngle;
 			
 						var seen = Math.abs(diffAngle) <= fov;
-	
+						
+						// If close enough, attack human
+						if (distance <= 20) human.health -= 1;
+						
 						// Chase if seen
-						if (distance <= 400){
+						if (distance <= 200){
 							if(!seen) continue;
 							cohesionx += human.position.x;
 							cohesiony += human.position.y;
