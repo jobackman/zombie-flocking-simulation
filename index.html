@@ -17,10 +17,10 @@
 			// GLOBAL VARIABLES
 			var planeWidth = 1000;
 			var planeHeight = 600;
-			var zombies = 15;
+			var zombies = 4;
 			var zombieSpeed = 0.2; 
-			var humans = 3;
-			var humanSpeed = 1.5;
+			var humans = 0;
+			var humanSpeed = 0;
 			var flock = [];
 			var people = [];
 			var cubes = [];		
@@ -32,7 +32,7 @@
 			var cohesionx;
 			var cohesiony;
 						
-			var fov = 120 * Math.PI / 180;
+			var fov = 90 * Math.PI / 180;
 			
 			//----------------------------------------------------------
 			// INITIALIZE
@@ -112,7 +112,12 @@
 				
 			// -------------------------------------------------------------------------------------
 			//Spawn ZOMBIES & People
-			for( i = 0; i < zombies; i++ ) spawnZombie();
+			for( i = 0; i < zombies; i++ ){
+				//random position				
+				var x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
+				var y = Math.floor(Math.random() * planeHeight) - planeHeight / 2;
+				spawnZombie(x,y);
+			} 
 			for( i = 0; i < humans; i++ ) spawnHuman();			
 			
 			// START THE ANIMATION
@@ -154,7 +159,7 @@
 			// -------------------------------------------------------------
 			// Add Zombies
 
-			function spawnZombie(){
+			function spawnZombie(x,y){
 /*
 				var zombie = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THREE.MeshBasicMaterial( {color: 0xff0000, wireframe: true}) );		
 				
@@ -172,7 +177,7 @@
 */
 					
 			var loader = new THREE.JSONLoader();
-				loader.load( "zombie.js", function( geometry ) {
+				loader.load( "models/zombie.js", function( geometry ) {
 
 					geometry.computeMorphNormals();
 
@@ -182,8 +187,8 @@
 					zombie.duration = 3000;					
 					zombie.scale.set(70,70,70);
 					
-					zombie.position.x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
-					zombie.position.y = Math.floor(Math.random() * planeHeight) - planeHeight / 2;
+					zombie.position.x = x;
+					zombie.position.y = y;
 					zombie.dx = Math.random() - 0.5;
 					zombie.dy = Math.random() - 0.5;
 					var len = Math.sqrt(zombie.dx*zombie.dx + zombie.dy*zombie.dy);
@@ -221,7 +226,7 @@ var human = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THR
 */
 				
 				var loader = new THREE.JSONLoader();
-				loader.load( "human.js", function( geometry ) {
+				loader.load( "models/human.js", function( geometry ) {
 
 					geometry.computeMorphNormals();
 
@@ -261,6 +266,8 @@ var human = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THR
 					var sepx = 0;
 					var sepy = 0;
 					var runspeed = 1;
+					//var startRunning = [1.05, 1.1, 1.15, 1.2, 1.25, 1.3, 1.35, 1.4, 1.45]
+					//var startRun = false; 
 					
 					// ------------------------------------------------------------------------------
 					// Jämför med ALLA zombies
@@ -276,16 +283,13 @@ var human = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THR
 							human.bitten += 1;
 						
 							if(human.bitten >= 100){
-								// Turn to zombie	
-								spawnZombie();
-								newzombie = flock[flock.length-1];
-								newzombie.position.x = human.position.x;
-								newzombie.position.y = human.position.y;
-								newzombie.dx = human.dx;
-								newzombie.dy = human.dy;
-								newzombie.rotation.z = human.rotation.z;
+								// Turn to zombie, spawnzombie at humans last position	
+								var x = human.position.x;
+								var y = human.position.y;
+								spawnZombie(x,y); 
 								scene.remove(people[i]);
 								people.splice(i,1);
+								break;
 								
 							}
 						}
@@ -300,8 +304,7 @@ var human = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THR
 					
 					// ------------------------------------------------------------------------------
 					// Separate from zombies 
-					if(encounter){	
-
+					if(encounter){							
 						// Vector towards the center
 						var avgdx = -(sepx / encounter);
 						var avgdy = -(sepy / encounter);		
@@ -309,7 +312,7 @@ var human = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THR
 						human.dx = human.dx * 0.8 + avgdx/dist * 0.2;
 						human.dy = human.dy * 0.8 + avgdy/dist * 0.2;
 						
-						runspeed = 1.5;
+						runspeed = 1.3;
 					}				
 					
 					// ------------------------------------------------------------------------------
@@ -351,7 +354,7 @@ var human = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THR
 					// Update position & rotation
 					human.position.x += human.dx * humanSpeed * runspeed;
 					human.position.y += human.dy * humanSpeed * runspeed;	
-					human.rotation.z = Math.atan2(human.dy, human.dx) + Math.PI/2; // TODO: Rotation not working correctly
+					human.rotation.z = Math.atan2(human.dy, human.dx) + Math.PI/2; 
 				}
 				
 				
@@ -382,7 +385,7 @@ var human = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THR
 						var diffY = zombie.position.y - human.position.y;
 						var distance = Math.sqrt(diffX * diffX + diffY * diffY);
 						
-						var diffAngle = zombie.rotation.z - human.rotation.z;
+						var diffAngle = zombie.rotation.z - Math.atan2(diffY,diffX);
 						if (diffAngle > Math.PI) diffAngle = 2 * Math.PI - diffAngle;
 						if (diffAngle < -Math.PI) diffAngle = -2 * Math.PI + diffAngle;
 			
@@ -411,7 +414,7 @@ var human = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THR
 						var diffY = zombie.position.y - otherZombie.position.y;
 						var distance = Math.sqrt(diffX * diffX + diffY * diffY);
 						
-						var diffAngle = zombie.rotation.z - otherZombie.rotation.z;
+						var diffAngle = zombie.rotation.z - Math.atan2(diffY,diffX);
 						if (diffAngle > Math.PI) diffAngle = 2 * Math.PI - diffAngle;
 						if (diffAngle < -Math.PI) diffAngle = -2 * Math.PI + diffAngle;
 			
@@ -476,7 +479,7 @@ var human = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THR
 						zombie.dx /= dxdyLen;
 						zombie.dy /= dxdyLen;
 						
-						chase = 10.0;
+						chase = 8.0;
 
 					}
 					
@@ -501,7 +504,10 @@ var human = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THR
 			}
 			
 			function addZombies(){
-				spawnZombie();
+				//random position				
+				var x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
+				var y = Math.floor(Math.random() * planeHeight) - planeHeight / 2;
+				spawnZombie(x,y);
 				$("#msg").html(flock.length + " zombies");
 				$("#info").stop(true).slideDown(300).delay(400).fadeOut(300);
 			}
