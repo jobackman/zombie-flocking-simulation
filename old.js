@@ -56,3 +56,18 @@ var human = new THREE.Mesh( new THREE.CylinderGeometry( 0, 15, 15, 12 ), new THR
 				scene.add(cube);
 			}
 */
+
+/ 
+// Zombies to other Zombies, cohesion: updateZombies()
+
+/*
+	// Cohesion
+	else if (distance <= 90){
+		if(!seen) continue;
+		continue; 								// TODO: Ska de grupperas på avstånd? 
+		cohesionx += otherZombie.position.x;
+		cohesiony += otherZombie.position.y;
+		cohesion = true;
+		cc += 1;
+	}						
+*/
