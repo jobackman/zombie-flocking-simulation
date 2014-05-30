@@ -226,6 +226,22 @@
 					var sepx = 0;
 					var sepy = 0;
 					
+					for(k = 0; k < people.length; k++){
+						if(k == i) continue;	
+						
+						otherHuman = people[k];
+						
+						var diffX = human.position.x - otherHuman.position.x;
+						var diffY = human.position.y - otherHuman.position.y;
+						var distance = Math.sqrt(diffX * diffX + diffY * diffY);
+						
+						// Separate
+						if (distance <= 25){
+							human.dx = human.dx * 0.8 + diffX / distance * 0.2;
+							human.dy = human.dy * 0.8 + diffY / distance * 0.2; 
+						}
+					}
+					
 					// ------------------------------------------------------------------------------
 					// Jämför med ALLA zombies
 					for (j = 0; j < flock.length; j++){	
@@ -378,13 +394,12 @@
 							if(!seen) continue;
 							alignx += otherZombie.dx;
 							aligny += otherZombie.dy;
-							align = true;
 							ac += 1;
 						}						
 					}
 					
 					// Align direction with crowd
-					if(align){
+					if(ac){
 						avgdx = alignx / ac;
 						avgdy = aligny / ac;
 						dist = Math.sqrt(avgdx*avgdx + avgdy*avgdy);
