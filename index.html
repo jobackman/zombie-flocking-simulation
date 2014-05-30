@@ -45,74 +45,82 @@
 						
 			var fov = 90 * Math.PI / 180;
 			
+			var clock, renderer, camera, scene, stats;
+			
+			// START THE ANIMATION
+			init();
+			
 			//----------------------------------------------------------
 			// INITIALIZE
 			
-			// clock for animations
-			var clock = new THREE.Clock();
-			
-			// stats 
-			var container = document.createElement( 'div' );
-			document.body.appendChild( container );	
-			var stats = new Stats();
-			stats.domElement.style.position = 'absolute';
-			stats.domElement.style.top = '0px';
-			container.appendChild(stats.domElement);
-			
-			// renderer
-			var renderer = new THREE.WebGLRenderer();
-			renderer.setSize(window.innerWidth, window.innerHeight);
-			document.body.appendChild(renderer.domElement);
-			
-			// camera
-			var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 3000);
-			camera.position.y = -planeHeight - 100;
-			camera.position.z = planeHeight + 100;
-			camera.rotation.x = 45 * (Math.PI / 180);
-			
-			// OrbitControls lets us pan around with the mouse.
-			controls = new THREE.OrbitControls(camera, renderer.domElement);
-			
-			// scene
-			var scene = new THREE.Scene();
-
-			// GRID
-			var numW = planeWidth/50; // how many wide
-			var numH = planeHeight/50; // how many tall
-			var plane = new THREE.Mesh( new THREE.PlaneGeometry( planeWidth, planeHeight, numW, numH ), new   THREE.MeshBasicMaterial( { color: 0x303030, wireframe: true } ) );
-			scene.add(plane);
-			
-			// LIGHTS
-			var ambientLight = new THREE.AmbientLight( 0.2 * 0x10 );
-			scene.add( ambientLight );
-
-			var directionalLight = new THREE.DirectionalLight( 0.5 * 0xffffff );
-			directionalLight.position.x = 0.5;
-			directionalLight.position.y = 0.5;
-			directionalLight.position.z = -0.2;
-			directionalLight.position.normalize();
-			scene.add( directionalLight );
-
-			var directionalLight = new THREE.DirectionalLight( 0.5 * 0xffffff );
-			directionalLight.position.x = - 0.5;
-			directionalLight.position.y = - 0.5;
-			directionalLight.position.z = - 0.5;
-			directionalLight.position.normalize();
-			scene.add( directionalLight );
+			function init(){	
+				// clock for animations
+				clock = new THREE.Clock();
 				
+				// stats 
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );	
+				stats = new Stats();
+				stats.domElement.style.position = 'absolute';
+				stats.domElement.style.top = '0px';
+				container.appendChild(stats.domElement);
 				
-			// -------------------------------------------------------------------------------------
-			//Spawn ZOMBIES & People
-			for( i = 0; i < zombies; i++ ){
-				//random position				
-				var x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
-				var y = Math.floor(Math.random() * planeHeight) - planeHeight / 2;
-				spawnZombie(x,y);
-			} 
-			for( i = 0; i < humans; i++ ) spawnHuman();			
+				// renderer
+				renderer = new THREE.WebGLRenderer();
+				renderer.setSize(window.innerWidth, window.innerHeight);
+				document.body.appendChild(renderer.domElement);
+				
+				// camera
+				camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 3000);
+				camera.position.y = -planeHeight - 100;
+				camera.position.z = planeHeight + 100;
+				camera.rotation.x = 45 * (Math.PI / 180);
+				
+				// OrbitControls lets us pan around with the mouse.
+				controls = new THREE.OrbitControls(camera, renderer.domElement);
+				
+				// scene
+				scene = new THREE.Scene();
+	
+				// GRID
+				var numW = planeWidth/50; // how many wide
+				var numH = planeHeight/50; // how many tall
+				var plane = new THREE.Mesh( new THREE.PlaneGeometry( planeWidth, planeHeight, numW, numH ), new   THREE.MeshBasicMaterial( { color: 0x303030, wireframe: true } ) );
+				scene.add(plane);
+				
+				// LIGHTS
+				var ambientLight = new THREE.AmbientLight( 0.2 * 0x10 );
+				scene.add( ambientLight );
+	
+				var directionalLight = new THREE.DirectionalLight( 0.5 * 0xffffff );
+				directionalLight.position.x = 0.5;
+				directionalLight.position.y = 0.5;
+				directionalLight.position.z = -0.2;
+				directionalLight.position.normalize();
+				scene.add( directionalLight );
+	
+				var directionalLight = new THREE.DirectionalLight( 0.5 * 0xffffff );
+				directionalLight.position.x = - 0.5;
+				directionalLight.position.y = - 0.5;
+				directionalLight.position.z = - 0.5;
+				directionalLight.position.normalize();
+				scene.add( directionalLight );
+					
+					
+				// -------------------------------------------------------------------------------------
+				//Spawn ZOMBIES & People
+				for( i = 0; i < zombies; i++ ){
+					//random position				
+					var x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
+					var y = Math.floor(Math.random() * planeHeight) - planeHeight / 2;
+					spawnZombie(x,y);
+				} 
+				for( i = 0; i < humans; i++ ) spawnHuman();	
+				
+				render();
+
+			}		
 			
-			// START THE ANIMATION
-			render();
 				
 			// -------------------------------------------------------------------------------------
 			// -------------------------------------------------------------------------------------
@@ -126,7 +134,8 @@
 				controls.update();
 				
 				// update agents
-				updateFlock();
+				updateZombies();
+				updateHumans();
 				
 				// update model animations
 				var delta = clock.getDelta();	
@@ -212,7 +221,7 @@
 			}
 			
 			
-			function updateFlock(){
+			function updateHumans(){
 				// ----------------------------------------------------------------------------------
 				// HUMAN MOVEMENT
 				for(i = 0; i < people.length; i++){
@@ -302,8 +311,9 @@
 					human.position.y += human.dy * human.speed;	
 					human.rotation.z = Math.atan2(human.dy, human.dx) + Math.PI/2; 
 				}
+			}
 				
-				
+			function updateZombies(){
 				// -------------------------------------------------------------
 				// ZOMBIE MOVEMENT
 				for(i = 0; i < flock.length; i++){
@@ -440,7 +450,6 @@
 					zombie.position.y += zombie.dy * zombie.speed;	
 					zombie.rotation.z = Math.atan2(zombie.dy, zombie.dx) + Math.PI;		
 				}
-				
 			}
 			
 			function addZombies(){
@@ -448,18 +457,18 @@
 				var x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
 				var y = Math.floor(Math.random() * planeHeight) - planeHeight / 2;
 				spawnZombie(x,y);
-				$("#msg").html(flock.length + " zombies");
+				$("#msg").html(flock.length+1 + " zombies");
 				$("#info").stop(true).slideDown(300).delay(400).fadeOut(300);
 			}
 			function addHumans(){
 				spawnHuman();
-				$("#msg").html(people.length + " humans");
+				$("#msg").html(people.length+1 + " humans");
 				$("#info").stop(true).slideDown(300).delay(400).fadeOut(300);
 			}
 			
 			// TODO: Tar bort från listan, men inte grafiskt. 
 			function removeZombies(){
-				if(flock.length > 1){
+				if(flock.length > 0){
 					scene.remove(flock[0]);
 					flock.splice(0,1);
 					$("#msg").html(flock.length + " zombies");
@@ -467,7 +476,7 @@
 				}
 			}
 			function removeHumans(){
-				if(people.length > 1){			
+				if(people.length > 0){			
 					scene.remove(people[0]);
 					people.splice(0,1);
 					$("#msg").html(people.length + " humans");
