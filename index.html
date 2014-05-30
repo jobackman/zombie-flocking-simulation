@@ -356,7 +356,10 @@
 						var seen = Math.abs(diffAngle) <= fov;
 						
 						// If close enough, attack human
-						if (distance <= 20) human.health -= 1;
+						if (distance <= 20) {
+							if(!seen) continue;
+							human.health -= 1;
+						}
 						
 						// Chase if seen
 						if (distance <= 200){
