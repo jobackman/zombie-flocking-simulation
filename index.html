@@ -3,7 +3,7 @@
 	<head>
 	</head>
 
-	<body> 
+	<body onload="countAgents()"> 
 			<!-- Latest compiled and minified CSS -->
 		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
 		<link rel="stylesheet" href="css/style.css">
@@ -19,12 +19,12 @@
 			var planeHeight = 600;
 			
 			// Zombie: Amount, Walkspeed, Runspeed
-			var zombies = 15;
+			var zombies = 20;
 			var zWalk = 0.2; 
 			var zRun = 2.0;
 			
 			// Human: Amount, Walkspeed, Runspeed
-			var humans = 30;
+			var humans = 100;
 			var hWalk = 1.0;
 			var hRun = 2.2;
 			
@@ -242,6 +242,8 @@
 							spawnZombie(x,y); 
 							scene.remove(people[i]);
 							people.splice(i,1);
+							$("#numZombies").html(flock.length+1);
+							$("#numHumans").html(people.length);
 							break;		
 						}
 
@@ -454,12 +456,14 @@
 				spawnZombie(x,y);
 				$("#msg").html(flock.length+1 + " zombies");
 				$("#info").stop(true).slideDown(300).delay(400).fadeOut(300);
+				$("#numZombies").html(flock.length + 1);
 			}
 			
 			function addHumans(){
 				spawnHuman();
 				$("#msg").html(people.length+1 + " humans");
 				$("#info").stop(true).slideDown(300).delay(400).fadeOut(300);
+				$("#numHumans").html(people.length+1);
 			}
 			
 			// TODO: Tar bort från listan, men inte grafiskt. 
@@ -469,6 +473,8 @@
 					flock.splice(0,1);
 					$("#msg").html(flock.length + " zombies");
 					$("#info").stop(true).slideDown(300).delay(400).fadeOut(300);
+					$("#numZombies").html(flock.length);
+
 				}
 			}
 			
@@ -478,9 +484,14 @@
 					people.splice(0,1);
 					$("#msg").html(people.length + " humans");
 					$("#info").stop(true).slideDown(300).delay(400).fadeOut(300);
+					$("#numHumans").html(people.length);
 				}
 			}
 			
+			function countAgents(){
+				$("#numZombies").html(flock.length);
+				$("#numHumans").html(people.length);
+			}
 		</script>
 				
 		<div id="controls">
@@ -491,7 +502,7 @@
 				<button class="addbtn btn btn-danger" onclick="removeZombies()">
 					<span class="glyphicon glyphicon-minus"></span> 
 				</button>
-				<span class="label label-danger" id="zlbl">Zombie</span>
+				<span class="label label-danger" id="zlbl"><span id="numZombies"></span> Zombies</span>
 			</p>
 			
 			<p>
@@ -501,7 +512,7 @@
 				<button class="addbtn btn btn-danger" onclick="removeHumans()">
 					<span class="glyphicon glyphicon-minus"></span> 
 				</button>
-				<span class="label label-info" id="hlbl">Human</span>
+				<span class="label label-info" id="hlbl"><span id="numHumans"></span> Humans</span>
 			</p>
 		</div> <!-- Controls -->
 		
