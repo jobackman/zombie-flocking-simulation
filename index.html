@@ -33,9 +33,6 @@
 			var flock = [];
 			var people = [];
 			
-			var cubes = [];		
-			var numCubes = 15;	
-			
 			var align;
 			var alignx;
 			var aligny;
@@ -52,6 +49,7 @@
 			
 			//----------------------------------------------------------
 			// INITIALIZE
+			
 			function init(){	
 				// clock for animations
 				clock = new THREE.Clock();
@@ -117,7 +115,6 @@
 				for( i = 0; i < humans; i++ ) spawnHuman();	
 				
 				render();
-
 			}		
 			
 				
@@ -155,7 +152,7 @@
 			}
 			
 			// -------------------------------------------------------------
-			// Spawn Zombie
+			// Add Zombies
 			function spawnZombie(x,y){					
 				var loader = new THREE.JSONLoader();
 					loader.load( "models/zombie.js", function( geometry ) {
@@ -182,12 +179,11 @@
 	
 						scene.add( zombie );
 						flock.push( zombie );
-					});
-				
+					});	
 			}
 			
 			// --------------------------------------------------------------
-			// Spawn Human
+			// Add Human
 			function spawnHuman(){
 				
 				var loader = new THREE.JSONLoader();
@@ -229,22 +225,6 @@
 					var encounter = 0; 
 					var sepx = 0;
 					var sepy = 0;
-					
-					
-					for (k = 0; k < people.length; k++){
-						if(i == k) continue;
-						otherHuman = people[k];
-						
-						var diffX = human.position.x - otherHuman.position.x;
-						var diffY = human.position.y - otherHuman.position.y;
-						var distance = Math.sqrt(diffX * diffX + diffY * diffY);
-						
-						// Separate, avoid collision
-						if (distance <= 25){
-							human.dx = human.dx * 0.8 + diffX / distance * 0.2;
-							human.dy = human.dy * 0.8 + diffY / distance * 0.2; 
-						}
-					}
 					
 					// ------------------------------------------------------------------------------
 					// Jämför med ALLA zombies
@@ -399,6 +379,15 @@
 							align = true;
 							ac += 1;
 						}
+						// Cohesion
+						else if (distance <= 90){
+							if(!seen) continue;
+							continue; 								// TODO: Ska de grupperas på avstånd? 
+							cohesionx += otherZombie.position.x;
+							cohesiony += otherZombie.position.y;
+							cohesion = true;
+							cc += 1;
+						}						
 					}
 					
 					// Align direction with crowd
@@ -473,6 +462,7 @@
 				$("#info").stop(true).slideDown(300).delay(400).fadeOut(300);
 			}
 			
+			// TODO: Tar bort från listan, men inte grafiskt. 
 			function removeZombies(){
 				if(flock.length > 0){
 					scene.remove(flock[0]);
