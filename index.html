@@ -1,140 +1,139 @@
 <!DOCTYPE html>
 <html>
 	<head>
-	</head>
-
-	<body onload="countAgents()"> 
 			<!-- Latest compiled and minified CSS -->
 		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
 		<link rel="stylesheet" href="css/style.css">
-		<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+		<script src="https://code.jquery.com/jquery-1.11.0.min.js"></script>
 		<script src="js/three.min.js"></script>
 		<script src="js/OrbitControls.js"></script>
 		<script src="js/stats.min.js"></script>
-		
+	</head>
+
+	<body onload="countAgents()">
 		<script>
 			//----------------------------------------------------------
 			// GLOBAL VARIABLES & CONTROLS
 			var planeWidth = 1000;
 			var planeHeight = 600;
-			
+
 			// Zombie: Amount, Walkspeed, Runspeed
 			var zombies = 20;
-			var zWalk = 0.2; 
+			var zWalk = 0.2;
 			var zRun = 2.0;
-			
+
 			// Human: Amount, Walkspeed, Runspeed
 			var humans = 100;
 			var hWalk = 1.0;
 			var hRun = 2.2;
-			
+
 			var accTime = 150;
-			
+
 			var flock = [];
 			var people = [];
-			
+
 			var align;
 			var alignx;
 			var aligny;
 			var cohesion;
 			var cohesionx;
 			var cohesiony;
-						
+
 			var fov = 90 * Math.PI / 180;
-			
+
 			var clock, renderer, camera, scene, stats;
-			
+
 			// START THE ANIMATION
 			init();
-			
+
 			//----------------------------------------------------------
 			// INITIALIZE
-			
-			function init(){	
+
+			function init(){
 				// clock for animations
 				clock = new THREE.Clock();
-				
-				// stats 
+
+				// stats
 				container = document.createElement( 'div' );
-				document.body.appendChild( container );	
+				document.body.appendChild( container );
 				stats = new Stats();
 				stats.domElement.style.position = 'absolute';
 				stats.domElement.style.top = '0px';
 				container.appendChild(stats.domElement);
-				
+
 				// renderer
 				renderer = new THREE.WebGLRenderer();
 				renderer.setSize(window.innerWidth, window.innerHeight);
 				document.body.appendChild(renderer.domElement);
-				
+
 				// camera
 				camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 3000);
 				camera.position.y = -planeHeight - 100;
 				camera.position.z = planeHeight + 100;
 				camera.rotation.x = 45 * (Math.PI / 180);
-				
+
 				// OrbitControls lets us pan around with the mouse.
 				controls = new THREE.OrbitControls(camera, renderer.domElement);
-				
+
 				// scene
 				scene = new THREE.Scene();
-	
+
 				// GRID
 				var numW = planeWidth/50; // how many wide
 				var numH = planeHeight/50; // how many tall
 				var plane = new THREE.Mesh( new THREE.PlaneGeometry( planeWidth, planeHeight, numW, numH ), new   THREE.MeshBasicMaterial( { color: 0x303030, wireframe: true } ) );
 				scene.add(plane);
-				
+
 				// LIGHTS
 				var ambientLight = new THREE.AmbientLight( 0.2 * 0x10 );
 				scene.add( ambientLight );
-	
+
 				var directionalLight = new THREE.DirectionalLight( 0.5 * 0xffffff );
 				directionalLight.position.x = 0.5;
 				directionalLight.position.y = 0.5;
 				directionalLight.position.z = -0.2;
 				directionalLight.position.normalize();
 				scene.add( directionalLight );
-	
+
 				var directionalLight = new THREE.DirectionalLight( 0.5 * 0xffffff );
 				directionalLight.position.x = - 0.5;
 				directionalLight.position.y = - 0.5;
 				directionalLight.position.z = - 0.5;
 				directionalLight.position.normalize();
 				scene.add( directionalLight );
-					
-					
+
+
 				// -------------------------------------------------------------------------------------
 				//Spawn ZOMBIES & People
 				for( i = 0; i < zombies; i++ ){
-					//random position				
+					//random position
 					var x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
 					var y = Math.floor(Math.random() * planeHeight) - planeHeight / 2;
 					spawnZombie(x,y);
-				} 
-				for( i = 0; i < humans; i++ ) spawnHuman();	
-				
+				}
+				for( i = 0; i < humans; i++ ) spawnHuman();
+
 				render();
-			}		
-			
-				
+			}
+
+
 			// -------------------------------------------------------------------------------------
 			// -------------------------------------------------------------------------------------
 			// FUNCTIONS
-			
+
 			// Main rendering function
-			function render(){	 	
-							
+			function render(){
+
 				// render
-				renderer.render(scene, camera);				
+				renderer.render(scene, camera);
 				controls.update();
-				
+
 				// update agents
 				updateZombies();
 				updateHumans();
-				
+
 				// update model animations
-				var delta = clock.getDelta();	
+				var delta = clock.getDelta();
 				for ( var i = 0; i < flock.length; i ++ ) {
 					var zombie = flock[ i ];
 					zombie.updateAnimation( 1000 * delta );
@@ -142,31 +141,31 @@
 				for ( var i = 0; i < people.length; i ++ ) {
 					var human = people[ i ];
 					human.updateAnimation( 1000 * delta );
-				}				
-				
+				}
+
 				// request new frame
 				requestAnimationFrame(function(){
 				    render();
 				    stats.update();
 				});
 			}
-			
+
 			// -------------------------------------------------------------
 			// Add Zombies
-			function spawnZombie(x,y){					
+			function spawnZombie(x,y){
 				var loader = new THREE.JSONLoader();
 					loader.load( "models/zombie.js", function( geometry ) {
-	
+
 						geometry.computeMorphNormals();
-	
+
 						var material = new THREE.MeshPhongMaterial( { color: 0xff0000,  shininess: 17,  morphTargets: true, morphNormals: true, vertexColors: THREE.NoColors, shading: THREE.FlatShading } );
 						var zombie = new THREE.MorphAnimMesh( geometry, material );
-	
-						zombie.duration = 3000;					
+
+						zombie.duration = 3000;
 						zombie.scale.set(70,70,70);
-						
+
 						zombie.speed = zWalk;
-						
+
 						zombie.position.x = x;
 						zombie.position.y = y;
 						zombie.dx = Math.random() - 0.5;
@@ -174,18 +173,18 @@
 						var len = Math.sqrt(zombie.dx*zombie.dx + zombie.dy*zombie.dy);
 						zombie.dx /= len;
 						zombie.dy /= len;
-						
+
 						zombie.rotation.z = Math.atan2(zombie.dy, zombie.dx) + Math.PI;
-	
+
 						scene.add( zombie );
 						flock.push( zombie );
-					});	
+					});
 			}
-			
+
 			// --------------------------------------------------------------
 			// Add Human
 			function spawnHuman(){
-				
+
 				var loader = new THREE.JSONLoader();
 				loader.load( "models/human.js", function( geometry ) {
 
@@ -194,12 +193,12 @@
 					var material = new THREE.MeshPhongMaterial( { color: 0x00ffff,  shininess: 17,  morphTargets: true, morphNormals: true, vertexColors: THREE.NoColors, shading: THREE.FlatShading } );
 					var human = new THREE.MorphAnimMesh( geometry, material );
 
-					human.duration = 1000;					
+					human.duration = 1000;
 					human.scale.set(20,20,20);
-					
+
 					human.speed = hWalk;
 					human.health = 100;
-					
+
 					human.position.x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
 					human.position.y = Math.floor(Math.random() * planeHeight) - planeHeight / 2;
 					human.dx = Math.random() - 0.5;
@@ -207,93 +206,93 @@
 					var len = Math.sqrt(human.dx*human.dx + human.dy*human.dy);
 					human.dx /= len;
 					human.dy /= len;
-					
+
 					human.rotation.z = Math.atan2(human.dy, human.dx) + Math.PI/2;
 
 					scene.add( human );
 					people.push( human );
 				});
 			}
-			
-			
+
+
 			function updateHumans(){
 				// ----------------------------------------------------------------------------------
 				// HUMAN MOVEMENT
 				for(i = 0; i < people.length; i++){
 					human = people[i];
-					
-					var encounter = 0; 
+
+					var encounter = 0;
 					var sepx = 0;
 					var sepy = 0;
-					
+
 					for(k = 0; k < people.length; k++){
-						if(k == i) continue;	
-						
+						if(k == i) continue;
+
 						otherHuman = people[k];
-						
+
 						var diffX = human.position.x - otherHuman.position.x;
 						var diffY = human.position.y - otherHuman.position.y;
 						var distance = Math.sqrt(diffX * diffX + diffY * diffY);
-						
+
 						// Separate
 						if (distance <= 25){
 							human.dx = human.dx * 0.8 + diffX / distance * 0.2;
-							human.dy = human.dy * 0.8 + diffY / distance * 0.2; 
+							human.dy = human.dy * 0.8 + diffY / distance * 0.2;
 						}
 					}
-					
+
 					// ------------------------------------------------------------------------------
 					// Jämför med ALLA zombies
-					for (j = 0; j < flock.length; j++){	
+					for (j = 0; j < flock.length; j++){
 						var zombie = flock[j];
-						
+
 						var diffX = zombie.position.x - human.position.x ;
 						var diffY = zombie.position.y - human.position.y;
-						var distance = Math.sqrt(diffX * diffX + diffY * diffY);				
-						
+						var distance = Math.sqrt(diffX * diffX + diffY * diffY);
+
 						if(human.health <= 0){
-							// Turn to zombie, spawn zombie at same position	
+							// Turn to zombie, spawn zombie at same position
 							var x = human.position.x;
 							var y = human.position.y;
-							spawnZombie(x,y); 
+							spawnZombie(x,y);
 							scene.remove(people[i]);
 							people.splice(i,1);
 							$("#numZombies").html(flock.length+1);
 							$("#numHumans").html(people.length);
-							break;		
+							break;
 						}
 
 						// Separate from zombies
 						else if (distance <= 100){
 							sepx += diffX;
-							sepy += diffY; 
+							sepy += diffY;
 							encounter += 1;
-						}						
+						}
 					}
-					
+
 					// ------------------------------------------------------------------------------
-					// Separate from zombies 
-					if(encounter){							
+					// Separate from zombies
+					if(encounter){
 						// Vector towards the center
 						var avgdx = -(sepx / encounter);
-						var avgdy = -(sepy / encounter);		
+						var avgdy = -(sepy / encounter);
 						dist = Math.sqrt(avgdx * avgdx + avgdy * avgdy);
 						human.dx = human.dx * 0.8 + avgdx/dist * 0.2;
 						human.dy = human.dy * 0.8 + avgdy/dist * 0.2;
-						
+
 						// Ramp up speed
 						if(human.speed < hRun) human.speed += (hRun-hWalk)/accTime;
 					}
 						// Ramp down speed
-					else if(human.speed > hWalk) human.speed -=(hRun-hWalk)/accTime;							
-					
+					else if(human.speed > hWalk) human.speed -=(hRun-hWalk)/accTime;
+
 					// ------------------------------------------------------------------------------
 					// If close to wall, make sure to turn
 					var leftwall = human.position.x + human.dx + planeWidth/2;
 					var rightwall = human.position.x + human.dx - planeWidth/2;
 					var lowerwall = human.position.y + human.dy + planeHeight/2;
 					var upperwall = human.position.y + human.dy - planeHeight/2;
-					
+
 					// Keep an eye on far wall if zombie-encounter
 					if(encounter){
 						if (leftwall < 80) human.dx = human.dx * 0.9 + (0.5) * 0.1;			//Left
@@ -301,31 +300,31 @@
 						if (lowerwall < 80) human.dy = human.dy * 0.9 + (0.5) * 0.1;		//Lower
 						if (upperwall > -80) human.dy = human.dy * 0.9 + (-0.5) * 0.1;		//Upper
 					}
-					
+
 					if (leftwall < 40) human.dx = human.dx * 0.9 + (1) * 0.1;				//Left
 					if (rightwall > -40) human.dx = human.dx * 0.9 + (-1) * 0.1;			//Right
 					if (lowerwall < 40) human.dy = human.dy * 0.9 + (1) * 0.1;				//Lower
 					if (upperwall > -40) human.dy = human.dy * 0.9 + (-1) * 0.1;			//Upper
-					
+
 					// Make sure not to leave grid
 					if ((human.position.x + human.dx) < -planeWidth/2) human.dx = -human.dx;			//Left
 					if ((human.position.x + human.dx) > planeWidth/2) human.dx = -human.dx;				//Right
 					if ((human.position.y + human.dy) < -planeHeight/2) human.dy = -human.dy;			//Lower
 					if ((human.position.y + human.dy) > planeHeight/2) human.dy = -human.dy;			//Upper
-					
+
 					// ------------------------------------------------------------------------------
 					// Normalize to Length = 1
 					var len = Math.sqrt(human.dx*human.dx + human.dy*human.dy);
 					human.dx /= len;
 					human.dy /= len;
-					
+
 					// Update position & rotation
 					human.position.x += human.dx * human.speed;
-					human.position.y += human.dy * human.speed;	
-					human.rotation.z = Math.atan2(human.dy, human.dx) + Math.PI/2; 
+					human.position.y += human.dy * human.speed;
+					human.rotation.z = Math.atan2(human.dy, human.dx) + Math.PI/2;
 				}
 			}
-				
+
 			function updateZombies(){
 				// -------------------------------------------------------------
 				// ZOMBIE MOVEMENT
@@ -339,28 +338,28 @@
 					cohesionx = 0;
 					cohesiony = 0;
 					cc = 0;
-					
+
 					// Compare with every human
-					for (j = 0; j < people.length; j++){	
-						
+					for (j = 0; j < people.length; j++){
+
 						var human = people[j];
-						
+
 						var diffX = zombie.position.x - human.position.x;
 						var diffY = zombie.position.y - human.position.y;
 						var distance = Math.sqrt(diffX * diffX + diffY * diffY);
-						
+
 						var diffAngle = zombie.rotation.z - Math.atan2(diffY,diffX);
 						if (diffAngle > Math.PI) diffAngle = 2 * Math.PI - diffAngle;
 						if (diffAngle < -Math.PI) diffAngle = -2 * Math.PI + diffAngle;
-			
+
 						var seen = Math.abs(diffAngle) <= fov;
-						
+
 						// If close enough, attack human
 						if (distance <= 20) {
 							if(!seen) continue;
 							human.health -= 1;
 						}
-						
+
 						// Chase if seen
 						if (distance <= 200){
 							if(!seen) continue;
@@ -368,29 +367,29 @@
 							cohesiony += human.position.y;
 							cc += 1;
 							zombie.duration = 500;
-						}		
+						}
 					}
-					
+
 					// Compare with every other zombie
-					for (k = 0; k < flock.length; k++){	
+					for (k = 0; k < flock.length; k++){
 						if(i == k) continue;
 
 						var otherZombie = flock[k];
-						
+
 						var diffX = zombie.position.x - otherZombie.position.x;
 						var diffY = zombie.position.y - otherZombie.position.y;
 						var distance = Math.sqrt(diffX * diffX + diffY * diffY);
-						
+
 						var diffAngle = zombie.rotation.z - Math.atan2(diffY,diffX);
 						if (diffAngle > Math.PI) diffAngle = 2 * Math.PI - diffAngle;
 						if (diffAngle < -Math.PI) diffAngle = -2 * Math.PI + diffAngle;
-			
+
 						var seen = Math.abs(diffAngle) <= fov;
-	
+
 						// Separate
 						if (distance <= 25){
 							zombie.dx = zombie.dx * 0.8 + diffX / distance * 0.2;
-							zombie.dy = zombie.dy * 0.8 + diffY / distance * 0.2; 
+							zombie.dy = zombie.dy * 0.8 + diffY / distance * 0.2;
 						}
 						// Align speed
 						else if (distance <= 50){
@@ -398,68 +397,68 @@
 							alignx += otherZombie.dx;
 							aligny += otherZombie.dy;
 							ac += 1;
-						}						
+						}
 					}
-					
+
 					// Align direction with crowd
 					if(ac){
 						avgdx = alignx / ac;
 						avgdy = aligny / ac;
 						dist = Math.sqrt(avgdx*avgdx + avgdy*avgdy);
-						
+
 						zombie.dx = zombie.dx * 0.98 + avgdx / dist * 0.02;
-						zombie.dy = zombie.dy * 0.98 + avgdy / dist * 0.02;	
+						zombie.dy = zombie.dy * 0.98 + avgdy / dist * 0.02;
 
 						// Normalize
 						dxdyLen = Math.sqrt(zombie.dx*zombie.dx + zombie.dy*zombie.dy);
 						zombie.dx /= dxdyLen;
 						zombie.dy /= dxdyLen;
 					}
-					
+
 					if(cc){
 						// Center of the human crowd
 						cohesionx = cohesionx / cc;
 						cohesiony = cohesiony / cc;
-						
+
 						// Vector towards the center
 						avgdx = cohesionx - zombie.position.x;
-						avgdy = cohesiony - zombie.position.y;		
+						avgdy = cohesiony - zombie.position.y;
 						dist = Math.sqrt(avgdx * avgdx + avgdy * avgdy);
-						
+
 						zombie.dx = zombie.dx * 0.9 + avgdx / dist * 0.1;
-						zombie.dy = zombie.dy * 0.9 + avgdy / dist * 0.1;	
-						
+						zombie.dy = zombie.dy * 0.9 + avgdy / dist * 0.1;
+
 						// Normalize
 						dxdyLen = Math.sqrt(zombie.dx*zombie.dx + zombie.dy*zombie.dy);
 						zombie.dx /= dxdyLen;
 						zombie.dy /= dxdyLen;
-						
+
 						// Ramp up speed
 						if(zombie.speed < zRun) zombie.speed += (zRun-zWalk)/accTime;
 					}
 						// Ramp down speed
 					else if(zombie.speed > zWalk) zombie.speed -= (zRun-zWalk)/accTime;
-					
+
 					// Normalize to Length = 1
 					var len = Math.sqrt(zombie.dx*zombie.dx + zombie.dy*zombie.dy);
 					zombie.dx /= len;
 					zombie.dy /= len;
-					
+
 					// ---------------------------------------------
 					// Update position on zombie
 					if ((zombie.position.x + zombie.dx) < -planeWidth/2) zombie.dx = -zombie.dx;
 					if ((zombie.position.y + zombie.dy) < -planeHeight/2) zombie.dy = -zombie.dy;
 					if ((zombie.position.x + zombie.dx) > planeWidth/2) zombie.dx = -zombie.dx;
 					if ((zombie.position.y + zombie.dy) > planeHeight/2) zombie.dy = -zombie.dy;
-					
+
 					zombie.position.x += zombie.dx * zombie.speed;
-					zombie.position.y += zombie.dy * zombie.speed;	
-					zombie.rotation.z = Math.atan2(zombie.dy, zombie.dx) + Math.PI;		
+					zombie.position.y += zombie.dy * zombie.speed;
+					zombie.rotation.z = Math.atan2(zombie.dy, zombie.dx) + Math.PI;
 				}
 			}
-			
+
 			function addZombies(){
-				//random position				
+				//random position
 				var x = Math.floor(Math.random() * planeWidth) - planeWidth / 2;
 				var y = Math.floor(Math.random() * planeHeight) - planeHeight / 2;
 				spawnZombie(x,y);
@@ -467,15 +466,15 @@
 				$("#info").stop(true).slideDown(300).delay(400).fadeOut(300);
 				$("#numZombies").html(flock.length + 1);
 			}
-			
+
 			function addHumans(){
 				spawnHuman();
 				$("#msg").html(people.length+1 + " humans");
 				$("#info").stop(true).slideDown(300).delay(400).fadeOut(300);
 				$("#numHumans").html(people.length+1);
 			}
-			
-			// TODO: Tar bort från listan, men inte grafiskt. 
+
+			// TODO: Tar bort från listan, men inte grafiskt.
 			function removeZombies(){
 				if(flock.length > 0){
 					scene.remove(flock[0]);
@@ -486,9 +485,9 @@
 
 				}
 			}
-			
+
 			function removeHumans(){
-				if(people.length > 0){			
+				if(people.length > 0){
 					scene.remove(people[0]);
 					people.splice(0,1);
 					$("#msg").html(people.length + " humans");
@@ -496,35 +495,35 @@
 					$("#numHumans").html(people.length);
 				}
 			}
-			
+
 			function countAgents(){
 				$("#numZombies").html(flock.length);
 				$("#numHumans").html(people.length);
 			}
 		</script>
-				
+
 		<div id="controls">
 			<p>
 				<button class="addbtn btn btn-success" onclick="addZombies()">
-					<span class="glyphicon glyphicon-plus"></span> 
+					<span class="glyphicon glyphicon-plus"></span>
 				</button>
 				<button class="addbtn btn btn-danger" onclick="removeZombies()">
-					<span class="glyphicon glyphicon-minus"></span> 
+					<span class="glyphicon glyphicon-minus"></span>
 				</button>
 				<span class="label label-danger" id="zlbl"><span id="numZombies"></span> Zombies</span>
 			</p>
-			
+
 			<p>
 				<button class="addbtn btn btn-success" onclick="addHumans()">
-					<span class="glyphicon glyphicon-plus"></span> 
+					<span class="glyphicon glyphicon-plus"></span>
 				</button>
 				<button class="addbtn btn btn-danger" onclick="removeHumans()">
-					<span class="glyphicon glyphicon-minus"></span> 
+					<span class="glyphicon glyphicon-minus"></span>
 				</button>
 				<span class="label label-info" id="hlbl"><span id="numHumans"></span> Humans</span>
 			</p>
 		</div> <!-- Controls -->
-		
+
 		<div id="info" class="messages">
 			<div class="alert alert-warning alert-dismissable">
 				<strong id="msg">Warning!</strong>
@@ -535,6 +534,6 @@
 				<strong id="deadmsg">#rekt scrub</strong>
 			</div>
 		</div>
-		
+
 	</body>
 </html>
